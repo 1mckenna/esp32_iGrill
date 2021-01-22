@@ -25,7 +25,7 @@ Wifi MQTT handling based on the example provided by the ESP_WifiManager Library 
 #define _WIFIMGR_LOGLEVEL_    3
 #include <Arduino.h>            // for button
 #include <FS.h>
-#include <ArduinoJson.h>        // get it from https://arduinojson.org/ or install via Arduino library manager
+#include <ArduinoJson.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -33,31 +33,11 @@ Wifi MQTT handling based on the example provided by the ESP_WifiManager Library 
 #include <WiFiMulti.h>
 WiFiMulti wifiMulti;
 
-// LittleFS has higher priority than SPIFFS
-#define USE_LITTLEFS    true
-#define USE_SPIFFS      false
-
-#if USE_LITTLEFS
-  // Use LittleFS
-  #include "FS.h"
-  // The library will be depreciated after being merged to future major Arduino esp32 core release 2.x
-  // At that time, just remove this library inclusion
-  #include <LITTLEFS.h>             // https://github.com/lorol/LITTLEFS
-  FS* filesystem =      &LITTLEFS;
-  #define FileFS        LITTLEFS
-  #define FS_Name       "LittleFS"
-#elif USE_SPIFFS
-  #include <SPIFFS.h>
-  FS* filesystem =      &SPIFFS;
-  #define FileFS        SPIFFS
-  #define FS_Name       "SPIFFS"
-#else
-  // Use FFat
-  #include <FFat.h>
-  FS* filesystem =      &FFat;
-  #define FileFS        FFat
-  #define FS_Name       "FFat"
-#endif
+#include "FS.h"
+#include <LITTLEFS.h>             // https://github.com/lorol/LITTLEFS
+FS* filesystem =      &LITTLEFS;
+#define FileFS        LITTLEFS
+#define FS_Name       "LittleFS"
 
 #define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 #define LED_BUILTIN       2
@@ -68,27 +48,14 @@ const int BUTTON_PIN  = 27;
 const int RED_LED     = 26;
 const int BLUE_LED    = 25;
 
+#define ESP_DRD_USE_LITTLEFS    true
+#define ESP_DRD_USE_SPIFFS      false
+#define ESP_DRD_USE_EEPROM      false
 
-#if USE_LITTLEFS
-  #define ESP_DRD_USE_LITTLEFS    true
-  #define ESP_DRD_USE_SPIFFS      false
-  #define ESP_DRD_USE_EEPROM      false
-#elif USE_SPIFFS
-  #define ESP_DRD_USE_LITTLEFS    false
-  #define ESP_DRD_USE_SPIFFS      true
-  #define ESP_DRD_USE_EEPROM      false
-#else
- #define ESP_DRD_USE_LITTLEFS    false
-  #define ESP_DRD_USE_SPIFFS      false
-  #define ESP_DRD_USE_EEPROM      true
-#endif
-#define DOUBLERESETDETECTOR_DEBUG       true  //false
+#define DOUBLERESETDETECTOR_DEBUG       false  //Enable or Disable DRD Debugging
 #include <ESP_DoubleResetDetector.h>      //https://github.com/khoih-prog/ESP_DoubleResetDetector
-// Number of seconds after reset during which a
-// subseqent reset will be considered a double reset.
-#define DRD_TIMEOUT 10
-// RTC Memory Address for the DoubleResetDetector to use
-#define DRD_ADDRESS 0
+#define DRD_TIMEOUT 10 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
+#define DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
 DoubleResetDetector* drd = NULL;
 
 uint32_t timer = millis();
@@ -102,26 +69,30 @@ bool initialConfig = false; //default false
 #define MQTT_SERVERPORT          "1883"
 #define MQTT_USERNAME            "mqtt"
 #define MQTT_PASSWORD            "password"
+#define MQTT_BASETOPIC           "igrill" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
+
 
 // Labels for custom parameters in WiFi manager
 #define MQTT_SERVER_Label             "MQTT_SERVER_Label"
 #define MQTT_SERVERPORT_Label         "MQTT_SERVERPORT_Label"
 #define MQTT_USERNAME_Label           "MQTT_USERNAME_Label"
 #define MQTT_PASSWORD_Label           "MQTT_PASSWORD_Label"
+#define MQTT_BASETOPIC_Label           "MQTT_BASETOPIC_Label"
+
 
 // Variables to save custom parameters to...
-// I would like to use these instead of #defines
 #define custom_MQTT_SERVER_LEN       20
 #define custom_MQTT_PORT_LEN          5
 #define custom_MQTT_USERNAME_LEN     20
 #define custom_MQTT_PASSWORD_LEN          40
+#define custom_MQTT_BASETOPIC_LEN          40
 
 char custom_MQTT_SERVER[custom_MQTT_SERVER_LEN];
 char custom_MQTT_SERVERPORT[custom_MQTT_PORT_LEN];
 char custom_MQTT_USERNAME[custom_MQTT_USERNAME_LEN];
 char custom_MQTT_PASSWORD[custom_MQTT_PASSWORD_LEN];
+char custom_MQTT_BASETOPIC[custom_MQTT_BASETOPIC_LEN];
 
-// For Config Portal
 // SSID and PW for Config Portal
 String ssid = "ESP32_iGrillClient";
 const char* password = "igrill_client";
@@ -130,15 +101,11 @@ const char* password = "igrill_client";
 String Router_SSID;
 String Router_Pass;
 
-// From v1.1.0
 // You only need to format the filesystem once
 //#define FORMAT_FILESYSTEM       true
 #define FORMAT_FILESYSTEM         false
-
 #define MIN_AP_PASSWORD_SIZE    8
-
 #define SSID_MAX_LEN            32
-//From v1.0.10, WPA2 passwords can be up to 63 characters long.
 #define PASS_MAX_LEN            64
 
 typedef struct
@@ -220,8 +187,6 @@ IPAddress APStaticGW  = IPAddress(192, 168, 100, 1);
 IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
 
 #include <ESP_WiFiManager.h>              //https://github.com/khoih-prog/ESP_WiFiManager
-
-
 WiFi_AP_IPConfig  WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
 
@@ -267,8 +232,6 @@ void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
     WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn);
   #endif 
 }
-
-///////////////////////////////////////////
 
 uint8_t connectMultiWiFi()
 {
@@ -317,7 +280,6 @@ uint8_t connectMultiWiFi()
   }
   else
     LOGERROR(F("WiFi not connected"));
-
   return status;
 }
 
@@ -335,7 +297,8 @@ bool mqttPublish()
     if(mqtt_client->connected())
     {
       Serial.printf("Connected to MQTT\nAttempting to Publish\n");
-      mqtt_client->publish("igrill/status","SUCCESS");
+      String topic = (String)MQTT_BASETOPIC + "igrill/status";
+      mqtt_client->publish(topic.c_str(),"SUCCESS");
     }
   }
   else
@@ -343,8 +306,6 @@ bool mqttPublish()
     Serial.printf("Initiating connection to MQTT\n");
     connectMQTT();
   }
-  
-  
 }
 
 void heartBeatPrint()
@@ -352,18 +313,18 @@ void heartBeatPrint()
   static int num = 1;
 
   if (WiFi.status() == WL_CONNECTED)
-    Serial.print(F("W"));        // W means connected to WiFi
+    Serial.printf("W");        // W means connected to WiFi
   else
-    Serial.print(F("N"));        // N means not connected to WiFi
+    Serial.printf("N");        // N means not connected to WiFi
 
   if (num == 40)
   {
-    Serial.println();
+    Serial.printf("\n");
     num = 1;
   }
   else if (num++ % 5 == 0)
   {
-    Serial.print(F(" "));
+    Serial.printf(" ");
   }
 }
 
@@ -371,7 +332,7 @@ void check_WiFi()
 {
   if ( (WiFi.status() != WL_CONNECTED) )
   {
-    Serial.println(F("\nWiFi lost. Call connectMultiWiFi in loop"));
+    Serial.printf("\nWiFi lost. Call connectMultiWiFi in loop\n");
     connectMultiWiFi();
   }
 }
@@ -417,10 +378,8 @@ void check_status()
     {
       mqttPublish();
     }
-    
     mqtt_publish_timeout = current_millis + PUBLISH_INTERVAL;
   }
-
 }
 
 bool loadConfigData()
@@ -449,7 +408,6 @@ void saveConfigData()
 {
   File file = FileFS.open(CONFIG_FILENAME, "w");
   LOGERROR(F("SaveWiFiCfgFile "));
-
   if (file)
   {
     file.write((uint8_t*) &WM_config,   sizeof(WM_config));
@@ -466,50 +424,50 @@ void saveConfigData()
 //event handler functions for button
 static void handleClick() 
 {
-  Serial.println(F("Button clicked!"));
+  Serial.printf("Button clicked!\n");
   wifi_manager();
 }
 
 static void handleDoubleClick() 
 {
-  Serial.println(F("Button double clicked!"));
+  Serial.printf("Button double clicked!\n");
 }
 
 static void handleLongPressStop() 
 {
-  Serial.println(F("Button pressed for long time and then released!"));
+  Serial.printf("Button pressed for long time and then released!\n");
   newConfigData();
 }
 
 void wifi_manager()
 {
-  Serial.println(F("\nConfig Portal requested."));
+  Serial.printf("\nConfig Portal requested.\n");
   digitalWrite(LED_BUILTIN, LED_ON); // turn the LED on by making the voltage LOW to tell us we are in configuration mode.
   //Local intialization. Once its business is done, there is no need to keep it around
   ESP_WiFiManager ESP_wifiManager("ESP32_iGrillClient");
   //Check if there is stored WiFi router/password credentials.
   //If not found, device will remain in configuration mode until switched off via webserver.
-  Serial.print(F("Opening Configuration Portal. "));
+  Serial.printf("Opening Configuration Portal. \n");
   Router_SSID = ESP_wifiManager.WiFi_SSID();
   Router_Pass = ESP_wifiManager.WiFi_Pass();
   if ( !initialConfig && (Router_SSID != "") && (Router_Pass != "") )
   {
     //If valid AP credential and not DRD, set timeout 120s.
     ESP_wifiManager.setConfigPortalTimeout(120);
-    Serial.println(F("Got stored Credentials. Timeout 120s"));
+    Serial.printf("Got stored Credentials. Timeout 120s\n");
   }
   else
   {
     ESP_wifiManager.setConfigPortalTimeout(0);
-    Serial.print(F("No timeout : "));
+    Serial.printf("No timeout : ");
     
     if (initialConfig)
     {
-      Serial.println(F("DRD or No stored Credentials.."));
+      Serial.printf("DRD or No stored Credentials..\n");
     }
     else
     {
-      Serial.println(F("No stored Credentials."));
+      Serial.printf("No stored Credentials.\n");
     }
   }
   //Local intialization. Once its business is done, there is no need to keep it around
@@ -522,15 +480,14 @@ void wifi_manager()
   ESP_WMParameter MQTT_SERVERPORT_FIELD(MQTT_SERVERPORT_Label, "MQTT SERVER PORT", custom_MQTT_SERVERPORT, custom_MQTT_PORT_LEN + 1);// MQTT_SERVERPORT
   ESP_WMParameter MQTT_USERNAME_FIELD(MQTT_USERNAME_Label, "MQTT USERNAME", custom_MQTT_USERNAME, custom_MQTT_USERNAME_LEN);// MQTT_USERNAME
   ESP_WMParameter MQTT_PASSWORD_FIELD(MQTT_PASSWORD_Label, "MQTT PASSWORD", custom_MQTT_PASSWORD, custom_MQTT_PASSWORD_LEN);// MQTT_PASSWORD
+  ESP_WMParameter MQTT_BASETOPIC_FIELD(MQTT_BASETOPIC_Label, "MQTT BASE TOPIC", custom_MQTT_BASETOPIC, custom_MQTT_BASETOPIC_LEN);// MQTT_BASETOPIC
   ESP_wifiManager.addParameter(&MQTT_SERVER_FIELD);
   ESP_wifiManager.addParameter(&MQTT_SERVERPORT_FIELD);
   ESP_wifiManager.addParameter(&MQTT_USERNAME_FIELD);
   ESP_wifiManager.addParameter(&MQTT_PASSWORD_FIELD);
+  ESP_wifiManager.addParameter(&MQTT_BASETOPIC_FIELD);
   ESP_wifiManager.setMinimumSignalQuality(-1);
-  // Set config portal channel, default = 1. Use 0 => random channel from 1-13
-  ESP_wifiManager.setConfigPortalChannel(0);
-  //set custom ip for portal
-  //ESP_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 100, 1), IPAddress(192, 168, 100, 1), IPAddress(255, 255, 255, 0));
+  ESP_wifiManager.setConfigPortalChannel(0);  // Set config portal channel, default = 1. Use 0 => random channel from 1-13
 #if !USE_DHCP_IP    
   #if USE_CONFIGURABLE_DNS
     // Set static IP, Gateway, Subnetmask, DNS1 and DNS2. New in v1.0.5
@@ -552,20 +509,17 @@ void wifi_manager()
   // processing will continue
   if (!ESP_wifiManager.startConfigPortal((const char *) ssid.c_str(), password))
   {
-    Serial.println(F("Not connected to WiFi but continuing anyway."));
+    Serial.printf("Not connected to WiFi but continuing anyway.\n");
   }
   else
   {
-    // If you get here you have connected to the WiFi
-    Serial.println(F("Connected...yeey :)"));
-    Serial.print(F("Local IP: "));
-    Serial.println(WiFi.localIP());
+    Serial.printf("WiFi Connected!\n");
+    Serial.printf("Local IP: %s\n", WiFi.localIP());
   }
   // Only clear then save data if CP entered and with new valid Credentials
   // No CP => stored getSSID() = ""
   if ( String(ESP_wifiManager.getSSID(0)) != "" && String(ESP_wifiManager.getSSID(1)) != "" )
   {
-    // Stored  for later usage, from v1.1.0, but clear first
     memset(&WM_config, 0, sizeof(WM_config));
     for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
     {
@@ -596,6 +550,7 @@ void wifi_manager()
   strcpy(custom_MQTT_SERVERPORT, MQTT_SERVERPORT_FIELD.getValue());
   strcpy(custom_MQTT_USERNAME, MQTT_USERNAME_FIELD.getValue());
   strcpy(custom_MQTT_PASSWORD, MQTT_PASSWORD_FIELD.getValue());
+  strcpy(custom_MQTT_BASETOPIC, MQTT_BASETOPIC_FIELD.getValue());
   writeConfigFile();  // Writing JSON config file to flash for next boot
   digitalWrite(LED_BUILTIN, LED_OFF); // Turn LED off as we are not in configuration mode.
 }
@@ -605,13 +560,12 @@ bool readConfigFile()
   File f = FileFS.open(CONFIG_FILE, "r");// this opens the config file in read-mode
   if (!f)
   {
-    Serial.println(F("Config File not found"));
+    Serial.printf("Config File not found\n");
     return false;
   }
   else
   {// we could open the file
     size_t size = f.size();
-    
     std::unique_ptr<char[]> buf(new char[size + 1]); // Allocate a buffer to store contents of the file.
     f.readBytes(buf.get(), size); // Read and store file contents in buf
     f.close();
@@ -619,7 +573,7 @@ bool readConfigFile()
     auto deserializeError = deserializeJson(json, buf.get());    
     if ( deserializeError )
     {
-      Serial.println(F("JSON parseObject() failed"));
+      Serial.printf("JSON parseObject() failed\n");
       return false;
     }  
     serializeJson(json, Serial);
@@ -644,26 +598,32 @@ bool readConfigFile()
     {
       strcpy(custom_MQTT_PASSWORD, json[MQTT_PASSWORD_Label]);
     }
+
+    if (json.containsKey(MQTT_BASETOPIC_Label))
+    {
+      strcpy(custom_MQTT_BASETOPIC, json[MQTT_BASETOPIC_Label]);
+    }
   }
-  Serial.println(F("\nConfig File successfully parsed"));
+  Serial.printf("\nConfig File successfully parsed\n");
   return true;
 }
 
 bool writeConfigFile() 
 {
-  Serial.println(F("Saving Config File"));
+  Serial.printf("Saving Config File\n");
   DynamicJsonDocument json(1024);
   // JSONify local configuration parameters
   json[MQTT_SERVER_Label]      = custom_MQTT_SERVER;
   json[MQTT_SERVERPORT_Label]  = custom_MQTT_SERVERPORT;
   json[MQTT_USERNAME_Label]    = custom_MQTT_USERNAME;
   json[MQTT_PASSWORD_Label]         = custom_MQTT_PASSWORD;
+  json[MQTT_BASETOPIC_Label]         = custom_MQTT_BASETOPIC;
 
   // Open file for writing
   File f = FileFS.open(CONFIG_FILE, "w");
   if (!f)
   {
-    Serial.println(F("Failed to open Config File for writing"));
+    Serial.printf("Failed to open Config File for writing\n");
     return false;
   }
 
@@ -671,7 +631,7 @@ bool writeConfigFile()
   // Write data to file and close it
   serializeJson(json, f);
   f.close();
-  Serial.println(F("\nConfig File successfully saved"));
+  Serial.printf("\nConfig File successfully saved\n");
   return true;
 }
 
@@ -684,6 +644,7 @@ void newConfigData()
   Serial.printf("custom_MQTT_SERVERPORT: %s\n",custom_MQTT_SERVERPORT); 
   Serial.printf("custom_MQTT_USERNAME: %s\n",custom_MQTT_USERNAME); 
   Serial.printf("custom_MQTT_PASSWORD: %s\n", custom_MQTT_PASSWORD); 
+  Serial.printf("custom_MQTT_BASETOPIC: %s\n", custom_MQTT_BASETOPIC); 
 }
 
 void connectMQTT() 
@@ -704,6 +665,7 @@ void connectMQTT()
   Serial.printf("MQTT Server: %s:%d\n", custom_MQTT_SERVER,atoi(custom_MQTT_SERVERPORT));
   Serial.printf("MQTT User: %s\n", custom_MQTT_USERNAME);
   Serial.printf("MQTT Password: %s\n", custom_MQTT_PASSWORD);
+  Serial.printf("MQTT BASETOPIC: %s\n", custom_MQTT_BASETOPIC);
   if (!mqtt_client->connect("iGrill", custom_MQTT_USERNAME, custom_MQTT_PASSWORD)) 
   {
     Serial.printf("MQTT connection failed: %d\n",mqtt_client->state());
@@ -717,31 +679,22 @@ void connectMQTT()
 // Setup function
 void setup()
 {
-  // Put your setup code here, to run once
   Serial.begin(115200);
   while (!Serial);
-
   delay(200);
-
-  Serial.print("\nStarting ConfigOnDRD_FS_MQTT_Ptr_Complex using " + String(FS_Name));
-  Serial.println(" on " + String(ARDUINO_BOARD));
-  Serial.println(ESP_WIFIMANAGER_VERSION);
-  Serial.println(ESP_DOUBLE_RESET_DETECTOR_VERSION);
-
-
+  Serial.printf("\nStarting iGrill BLE Client using %s on %s",String(FS_Name),String(ARDUINO_BOARD));
+  Serial.printf("%s\n%s\n",ESP_WIFIMANAGER_VERSION, ESP_DOUBLE_RESET_DETECTOR_VERSION);
   // Initialize the LED digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
-
   // Format FileFS if not yet
   if (!FileFS.begin(true))
   {
-    Serial.print(FS_Name);
-    Serial.println(F(" failed! AutoFormatting."));
+    Serial.printf("%s failed! AutoFormatting.\n"),FS_Name;
   }
 
   if (!readConfigFile())
   {
-    Serial.println(F("Failed to read configuration file, using default values"));
+    Serial.printf("Failed to read configuration file, using default values\n");
   }
 
   initAPIPConfigStruct(WM_AP_IPconfig);
@@ -749,21 +702,18 @@ void setup()
 
   if (!readConfigFile())
   {
-    Serial.println(F("Can't read Config File, using default values"));
+    Serial.printf("Can't read Config File, using default values\n");
   }
 
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-
   if (!drd)
   {
-    Serial.println(F("Can't instantiate. Disable DRD feature"));
+    Serial.printf("Can't instantiate. Disable DRD feature\n");
   }
   else if (drd->detectDoubleReset())
   {
     // DRD, disable timeout.
-    //ESP_wifiManager.setConfigPortalTimeout(0);
-    
-    Serial.println(F("Open Config Portal without Timeout: Double Reset Detected"));
+    Serial.printf("Open Config Portal without Timeout: Double Reset Detected\n");
     initialConfig = true;
   }
  
@@ -775,16 +725,13 @@ void setup()
   {   
     // Load stored data, the addAP ready for MultiWiFi reconnection
     loadConfigData();
-
     // Pretend CP is necessary as we have no AP Credentials
     initialConfig = true;
-
     for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
     {
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
       if ( (String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE) )
       {
-        LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw );
         wifiMulti.addAP(WM_config.WiFi_Creds[i].wifi_ssid, WM_config.WiFi_Creds[i].wifi_pw);
         initialConfig = false;
       }
@@ -792,14 +739,12 @@ void setup()
 
     if (initialConfig)
     {
-      Serial.println(F("Open Config Portal without Timeout: No stored WiFi Credentials"));
-    
+      Serial.printf("Open Config Portal without Timeout: No stored WiFi Credentials\n");
       wifi_manager();
     }
     else if ( WiFi.status() != WL_CONNECTED ) 
     {
-      Serial.println(F("ConnectMultiWiFi in setup"));
-     
+      Serial.printf("ConnectMultiWiFi in setup\n");
       connectMultiWiFi();
     }
   }
@@ -810,7 +755,6 @@ void setup()
 // Loop function
 void loop()
 {
-  // checking button state all the time
   // Call the double reset detector loop method every so often,
   // so that it can recognise when the timeout expires.
   // You can also call drd.stop() when you wish to no longer
