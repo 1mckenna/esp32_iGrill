@@ -297,7 +297,7 @@ bool mqttPublish()
     if(mqtt_client->connected())
     {
       Serial.printf("Connected to MQTT\nAttempting to Publish\n");
-      String topic = (String)MQTT_BASETOPIC + "igrill/status";
+      String topic = (String)MQTT_BASETOPIC + "/igrill/status";
       mqtt_client->publish(topic.c_str(),"SUCCESS");
     }
   }
@@ -514,7 +514,6 @@ void wifi_manager()
   else
   {
     Serial.printf("WiFi Connected!\n");
-    Serial.printf("Local IP: %s\n", WiFi.localIP());
   }
   // Only clear then save data if CP entered and with new valid Credentials
   // No CP => stored getSSID() = ""
