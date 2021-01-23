@@ -378,7 +378,7 @@ void setupProbes()
 }
 
 //Read and Publish iGrill System Info
-void publishSystemInfo()
+void getiGrillInfo()
 {
   try
   {
@@ -665,7 +665,7 @@ bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, in
     {
       // Serial.printf("Publishing iGrill Client Info to MQTT\n");
       String topic = (String)MQTT_BASETOPIC + "/igrill/systeminfo";
-      String payload = "Network: "+WiFi.SSID()+"\nSignal Strength: "+String(WiFi.RSSI())+"\nIP Address: " + WiFi.localIP().toString() +"\niGrill Device: " + iGrillBLEAddress + "\niGrill Firmware Version: " + fwVersion + "\niGrill Signal Strength: "+String(iGrillRSSI);
+      String payload = "Uptime: "+getSystemUptime()+"\nNetwork: "+WiFi.SSID()+"\nSignal Strength: "+String(WiFi.RSSI())+"\nIP Address: " + WiFi.localIP().toString() +"\niGrill Device: " + iGrillBLEAddress + "\niGrill Firmware Version: " + fwVersion + "\niGrill Signal Strength: "+String(iGrillRSSI);
       mqtt_client->publish(topic.c_str(),payload.c_str());
     }
   }
@@ -782,9 +782,18 @@ void check_status()
   // Print iGrill System Info every IGRILL_HEARTBEAT_INTERVAL (5) minutes.
   if ((current_millis > igrillheartbeat_timeout) || (igrillheartbeat_timeout == 0))
   { 
-    publishSystemInfo();
+    getiGrillInfo();
     igrillheartbeat_timeout = current_millis + IGRILL_HEARTBEAT_INTERVAL;
   }
+}
+
+String getSystemUptime()
+{
+  long millisecs = millis();
+  int systemUpTimeMn = int((millisecs / (1000 * 60)) % 60);
+  int systemUpTimeHr = int((millisecs / (1000 * 60 * 60)) % 24);
+  int systemUpTimeDy = int((millisecs / (1000 * 60 * 60 * 24)) % 365);
+  return String(systemUpTimeDy)+"d:"+String(systemUpTimeHr)+"h:"+String(systemUpTimeMn)+"m";
 }
 
 bool loadConfigData()
@@ -1180,7 +1189,7 @@ void loop()
     // Now that we have found our device, lets attempt to connect and authenticate.
     if (connectToServer()) 
     {
-      publishSystemInfo(); //Get and Publish to MQTT Firmware Information for iGrill Device
+      getiGrillInfo(); //Get and Publish to MQTT Firmware Information for iGrill Device
       setupBatteryCharacteristic(); //Setup Callbacks to get iGrill Battery Level
       setupProbes(); //Setup Callbacks to get iGrill Probe Temperatures
     }
