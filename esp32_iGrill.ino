@@ -55,7 +55,7 @@ const int BLUE_LED    = 25;
 
 #define DOUBLERESETDETECTOR_DEBUG       false  //Enable or Disable DRD Debugging
 #include <ESP_DoubleResetDetector.h>      //https://github.com/khoih-prog/ESP_DoubleResetDetector
-#define DRD_TIMEOUT 10 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
+#define DRD_TIMEOUT 5 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
 #define DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
 DoubleResetDetector* drd = NULL;
 
@@ -244,11 +244,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      Serial.printf(" ! Probe 1 Disconnected!\n");
+      // Serial.printf(" ! Probe 1 Disconnected!\n");
+      publishProbeTemp(1,-1);
     }
     else
     {
-      Serial.printf(" * Probe 1 Temp: %d\n",pData[0]);
+      // Serial.printf(" * Probe 1 Temp: %d\n",pData[0]);
       publishProbeTemp(1,pData[0]);
     }
 
@@ -257,11 +258,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      Serial.printf(" ! Probe 2 Disconnected!\n");
+      // Serial.printf(" ! Probe 2 Disconnected!\n");
+      publishProbeTemp(2,-1);
     }
     else
     {
-      Serial.printf(" * Probe 2 Temp: %d\n",pData[0]);
+      // Serial.printf(" * Probe 2 Temp: %d\n",pData[0]);
       publishProbeTemp(2,pData[0]);
     }
 
@@ -270,11 +272,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      Serial.printf(" ! Probe 3 Disconnected!\n");
+      // Serial.printf(" ! Probe 3 Disconnected!\n");
+      publishProbeTemp(3,-1);
     }
     else
     {
-      Serial.printf(" * Probe 3 Temp: %d\n",pData[0]);
+      // Serial.printf(" * Probe 3 Temp: %d\n",pData[0]);
       publishProbeTemp(3,pData[0]);
     }
 
@@ -283,18 +286,20 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      Serial.printf(" ! Probe 4 Disconnected!\n");
+      // Serial.printf(" ! Probe 4 Disconnected!\n");
+      publishProbeTemp(4,-1);
     }
     else
     {
-      Serial.printf(" * Probe 4 Temp: %d\n",pData[0]);
+      // Serial.printf(" * Probe 4 Temp: %d\n",pData[0]);
       publishProbeTemp(4,pData[0]);
     }
 
   }
   else if(BATTERY_LEVEL.equals(pBLERemoteCharacteristic->getUUID()))
   {
-    Serial.printf(" %% Battery Level: %d%%\n",pData[0]);
+    // Serial.printf(" %% Battery Level: %d%%\n",pData[0]);
+    publishBattery(pData[0]);
   }
 }
 
@@ -368,7 +373,6 @@ void setupProbes()
       {
         Serial.printf(" - Setting up Probes Failed!\n");
         iGrillClient->disconnect();
-        //return false;
       }
     }
 }
@@ -376,22 +380,41 @@ void setupProbes()
 //Read iGrill Device Firmware
 void getFirmwareVersion()
 {
-  Serial.printf(" - iGrill Firmware Version: %s\n", iGrillAuthService->getCharacteristic(FIRMWARE_VERSION)->readValue().c_str());
+  try
+  {
+    std::string fwVersion = iGrillAuthService->getCharacteristic(FIRMWARE_VERSION)->readValue();
+    Serial.printf(" - iGrill Firmware Version: %s\n", fwVersion.c_str());
+    publishSystemInfo(fwVersion.c_str(), myDevice->getAddress().toString().c_str(), myDevice->getRSSI());
+  }
+  catch(...)
+  {
+    Serial.printf("Error obtaining Firmware Info\n");
+    iGrillClient->disconnect();
+  }
 }
 
 //Register Callback for iGrill Device Battery Level
 bool setupBatteryCharacteristic()
 {
   Serial.println(" - Setting up Battery Characteristic...");
-  batteryCharacteristic = iGrillBattService->getCharacteristic(BATTERY_LEVEL);
-  if (batteryCharacteristic == nullptr)
+  try
+  {
+    batteryCharacteristic = iGrillBattService->getCharacteristic(BATTERY_LEVEL);
+    if (batteryCharacteristic == nullptr)
+    {
+      Serial.printf(" - Setting up Battery Characteristic Failed!\n");
+      iGrillClient->disconnect();
+      return false;
+    }
+    batteryCharacteristic->registerForNotify(notifyCallback);
+    return true;
+  }
+  catch(...)
   {
     Serial.printf(" - Setting up Battery Characteristic Failed!\n");
     iGrillClient->disconnect();
     return false;
   }
-  batteryCharacteristic->registerForNotify(notifyCallback);
-  return true;
 }
 
 //BLE Security Callbacks used for pairing
@@ -634,21 +657,21 @@ void toggleLED()
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
-bool mqttPublish()
+bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, int iGrillRSSI)
 {
-  Serial.printf("Entering MQTT Publish\n");
   if(mqtt_client)
   {
     if(mqtt_client->connected())
     {
-      Serial.printf("Connected to MQTT\nAttempting to Publish\n");
-      String topic = (String)MQTT_BASETOPIC + "/igrill/status";
-      mqtt_client->publish(topic.c_str(),"SUCCESS");
+      // Serial.printf("Publishing iGrill Client Info to MQTT\n");
+      String topic = (String)MQTT_BASETOPIC + "/igrill/systeminfo";
+      String payload = "Network: "+WiFi.SSID()+"\nSignal Strength: "+String(WiFi.RSSI())+"\nIP Address: " + WiFi.localIP().toString() +"\niGrill Device: " + iGrillBLEAddress + "\niGrill Firmware Version: " + fwVersion + "\niGrill Signal Strength: "+String(iGrillRSSI);
+      mqtt_client->publish(topic.c_str(),payload.c_str());
     }
   }
   else
   {
-    Serial.printf("Initiating connection to MQTT\n");
+    Serial.printf("\nInitiating connection to MQTT\n");
     connectMQTT();
   }
 }
@@ -659,14 +682,32 @@ void publishProbeTemp(int probeNum, int temp)
   {
     if(mqtt_client->connected())
     {
-      Serial.printf("Publishing Probe Temp to MQTT\n");
-      String payload = (String)MQTT_BASETOPIC + "/igrill/probe/" + probeNum + "/temp/"+temp;
-      mqtt_client->publish(payload.c_str(),"SUCCESS");
+      // Serial.printf("Publishing Probe Temp to MQTT\n");
+      String topic = (String)MQTT_BASETOPIC + "/igrill/probe_" + String(probeNum);
+      mqtt_client->publish(topic.c_str(),String(temp).c_str());
     }
   }
   else
   {
-    Serial.printf("Initiating connection to MQTT\n");
+    Serial.printf("\nInitiating connection to MQTT\n");
+    connectMQTT();
+  }
+}
+
+void publishBattery(int battPercent)
+{
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      // Serial.printf("Publishing Battery Level to MQTT\n");
+      String topic = (String)MQTT_BASETOPIC + "/igrill/battery_level";
+      mqtt_client->publish(topic.c_str(),String(battPercent).c_str());
+    }
+  }
+  else
+  {
+    Serial.printf("\nInitiating connection to MQTT\n");
     connectMQTT();
   }
 }
