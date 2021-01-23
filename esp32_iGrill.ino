@@ -377,13 +377,13 @@ void setupProbes()
     }
 }
 
-//Read iGrill Device Firmware
-void getFirmwareVersion()
+//Read and Publish iGrill System Info
+void publishSystemInfo()
 {
   try
   {
     std::string fwVersion = iGrillAuthService->getCharacteristic(FIRMWARE_VERSION)->readValue();
-    Serial.printf(" - iGrill Firmware Version: %s\n", fwVersion.c_str());
+    // Serial.printf(" - iGrill Firmware Version: %s\n", fwVersion.c_str());
     publishSystemInfo(fwVersion.c_str(), myDevice->getAddress().toString().c_str(), myDevice->getRSSI());
   }
   catch(...)
@@ -737,6 +737,10 @@ void check_WiFi()
   if ( (WiFi.status() != WL_CONNECTED) )
   {
     Serial.printf("\nWiFi lost. Call connectMultiWiFi in loop\n");
+    delete(mqtt_client);
+    delete(client);
+    client=NULL;
+    mqtt_client=NULL;
     connectMultiWiFi();
   }
 }
@@ -746,12 +750,13 @@ void check_status()
   static ulong checkstatus_timeout  = 0;
   static ulong LEDstatus_timeout    = 0;
   static ulong checkwifi_timeout    = 0;
-  static ulong mqtt_publish_timeout = 0;
+  static ulong igrillheartbeat_timeout = 0;
   
   ulong current_millis = millis();
-  #define WIFICHECK_INTERVAL    1000L
-  #define LED_INTERVAL          2000L
-  #define HEARTBEAT_INTERVAL    10000L
+  #define WIFICHECK_INTERVAL           1000L
+  #define LED_INTERVAL                 2000L
+  #define HEARTBEAT_INTERVAL          10000L
+  #define IGRILL_HEARTBEAT_INTERVAL  300000L
 
   // Check WiFi every WIFICHECK_INTERVAL (1) seconds.
   if ((current_millis > checkwifi_timeout) || (checkwifi_timeout == 0))
@@ -772,6 +777,13 @@ void check_status()
   { 
     heartBeatPrint();
     checkstatus_timeout = current_millis + HEARTBEAT_INTERVAL;
+  }
+
+  // Print iGrill System Info every IGRILL_HEARTBEAT_INTERVAL (5) minutes.
+  if ((current_millis > igrillheartbeat_timeout) || (igrillheartbeat_timeout == 0))
+  { 
+    publishSystemInfo();
+    igrillheartbeat_timeout = current_millis + IGRILL_HEARTBEAT_INTERVAL;
   }
 }
 
@@ -1168,7 +1180,7 @@ void loop()
     // Now that we have found our device, lets attempt to connect and authenticate.
     if (connectToServer()) 
     {
-      getFirmwareVersion(); //Get Firmware Information for iGrill Device
+      publishSystemInfo(); //Get and Publish to MQTT Firmware Information for iGrill Device
       setupBatteryCharacteristic(); //Setup Callbacks to get iGrill Battery Level
       setupProbes(); //Setup Callbacks to get iGrill Probe Temperatures
     }
