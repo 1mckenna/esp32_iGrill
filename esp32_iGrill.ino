@@ -21,10 +21,7 @@ NOTE: You can change this from the default by editing the code @ Line XXXX befor
 Wifi MQTT handling based on the example provided by the ESP_WifiManager Library for handling Wifi/MQTT Setup (https://github.com/khoih-prog/ESP_WiFiManager)
 */
 
-// Use from 0 to 4. Higher number, more debugging messages and memory usage.
-#define _WIFIMGR_LOGLEVEL_    3
-#include <Arduino.h>            // for button
-#include <FS.h>
+#include "config.h" //iGrill BLE Client Configurable Settings
 #include <ArduinoJson.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
@@ -33,30 +30,14 @@ Wifi MQTT handling based on the example provided by the ESP_WifiManager Library 
 #include <WiFiMulti.h>
 WiFiMulti wifiMulti;
 #include <BLEDevice.h>
-
-#include "FS.h"
 #include <LITTLEFS.h>             // https://github.com/lorol/LITTLEFS
-FS* filesystem =      &LITTLEFS;
-#define FileFS        LITTLEFS
-#define FS_Name       "LittleFS"
-
-#define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
-#define LED_BUILTIN       2
-#define LED_ON            HIGH
-#define LED_OFF           LOW
+FS* filesystem = &LITTLEFS;
 
 const int BUTTON_PIN  = 27;
 const int RED_LED     = 26;
 const int BLUE_LED    = 25;
 
-#define ESP_DRD_USE_LITTLEFS    true
-#define ESP_DRD_USE_SPIFFS      false
-#define ESP_DRD_USE_EEPROM      false
-
-#define DOUBLERESETDETECTOR_DEBUG       false  //Enable or Disable DRD Debugging
 #include <ESP_DoubleResetDetector.h>      //https://github.com/khoih-prog/ESP_DoubleResetDetector
-#define DRD_TIMEOUT 5 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
-#define DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
 DoubleResetDetector* drd = NULL;
 
 uint32_t timer = millis();
@@ -65,29 +46,7 @@ const char* CONFIG_FILE = "/ConfigMQTT.json";
 // Indicates whether ESP has WiFi credentials saved from previous session
 bool initialConfig = false; //default false
 
-// Default configuration values for MQTT
-#define MQTT_SERVER              "127.0.0.1"
-#define MQTT_SERVERPORT          "1883"
-#define MQTT_USERNAME            "mqtt"
-#define MQTT_PASSWORD            "password"
-#define MQTT_BASETOPIC           "igrill" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
-
-
-// Labels for custom parameters in WiFi manager
-#define MQTT_SERVER_Label             "MQTT_SERVER_Label"
-#define MQTT_SERVERPORT_Label         "MQTT_SERVERPORT_Label"
-#define MQTT_USERNAME_Label           "MQTT_USERNAME_Label"
-#define MQTT_PASSWORD_Label           "MQTT_PASSWORD_Label"
-#define MQTT_BASETOPIC_Label           "MQTT_BASETOPIC_Label"
-
-
-// Variables to save custom parameters to...
-#define custom_MQTT_SERVER_LEN       20
-#define custom_MQTT_PORT_LEN          5
-#define custom_MQTT_USERNAME_LEN     20
-#define custom_MQTT_PASSWORD_LEN          40
-#define custom_MQTT_BASETOPIC_LEN          40
-
+//Setting up variables for MQTT Info in Config Portal
 char custom_MQTT_SERVER[custom_MQTT_SERVER_LEN];
 char custom_MQTT_SERVERPORT[custom_MQTT_PORT_LEN];
 char custom_MQTT_USERNAME[custom_MQTT_USERNAME_LEN];
@@ -102,13 +61,6 @@ const char* password = "igrill_client";
 String Router_SSID;
 String Router_Pass;
 
-// You only need to format the filesystem once
-//#define FORMAT_FILESYSTEM       true
-#define FORMAT_FILESYSTEM         false
-#define MIN_AP_PASSWORD_SIZE    8
-#define SSID_MAX_LEN            32
-#define PASS_MAX_LEN            64
-
 typedef struct
 {
   char wifi_ssid[SSID_MAX_LEN];
@@ -121,8 +73,6 @@ typedef struct
   String wifi_pw;
 }  WiFi_Credentials_String;
 
-#define NUM_WIFI_CREDENTIALS      2
-
 typedef struct
 {
   WiFi_Credentials  WiFi_Creds [NUM_WIFI_CREDENTIALS];
@@ -130,38 +80,15 @@ typedef struct
 
 WM_Config         WM_config;
 
-#define  CONFIG_FILENAME              F("/wifi_cred.dat")
-
-// Use false if you don't like to display Available Pages in Information Page of Config Portal
-// Comment out or use true to display Available Pages in Information Page of Config Portal
-// Must be placed before #include <ESP_WiFiManager.h>
-#define USE_AVAILABLE_PAGES     true
-
-// From v1.0.10 to permit disable/enable StaticIP configuration in Config Portal from sketch. Valid only if DHCP is used.
-// You'll loose the feature of dynamically changing from DHCP to static IP, or vice versa
-// You have to explicitly specify false to disable the feature.
-//#define USE_STATIC_IP_CONFIG_IN_CP          false
-
-// Use false to disable NTP config. Advisable when using Cellphone, Tablet to access Config Portal.
-// See Issue 23: On Android phone ConfigPortal is unresponsive (https://github.com/khoih-prog/ESP_WiFiManager/issues/23)
-#define USE_ESP_WIFIMANAGER_NTP     false
-
-// Use true to enable CloudFlare NTP service. System can hang if you don't have Internet access while accessing CloudFlare
-// See Issue #21: CloudFlare link in the default portal (https://github.com/khoih-prog/ESP_WiFiManager/issues/21)
-#define USE_CLOUDFLARE_NTP          false
-#define USING_CORS_FEATURE          true
-
 // Use USE_DHCP_IP == true for dynamic DHCP IP, false to use static IP which you have to change accordingly to your network
 #if (defined(USE_STATIC_IP_CONFIG_IN_CP) && !USE_STATIC_IP_CONFIG_IN_CP)
-// Force DHCP to be true
-#if defined(USE_DHCP_IP)
-#undef USE_DHCP_IP
-#endif
-#define USE_DHCP_IP     true
+  // Force DHCP to be true
+  #if defined(USE_DHCP_IP)
+    #undef USE_DHCP_IP
+  #endif
+  #define USE_DHCP_IP     true
 #else
-// You can select DHCP or Static IP here
-#define USE_DHCP_IP     true
-//#define USE_DHCP_IP     false
+  #define USE_DHCP_IP     true
 #endif
 
 #if ( USE_DHCP_IP || ( defined(USE_STATIC_IP_CONFIG_IN_CP) && !USE_STATIC_IP_CONFIG_IN_CP ) )
@@ -178,8 +105,6 @@ WM_Config         WM_config;
   IPAddress netMask     = IPAddress(255, 255, 255, 0);
 #endif
 
-#define USE_CONFIGURABLE_DNS      false
-
 IPAddress dns1IP      = gatewayIP;
 IPAddress dns2IP      = IPAddress(8, 8, 8, 8);
 
@@ -195,6 +120,7 @@ WiFi_STA_IPConfig WM_STA_IPconfig;
 WiFiClient *client = NULL;
 PubSubClient *mqtt_client = NULL;
 
+#pragma region iGrill_BLE
 static const uint8_t chalBuf[] = {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}; //iGrill Authentcation Payload
 static BLEUUID GENERIC_ATTRIBUTE("00001801-0000-1000-8000-00805f9b34fb"); //UNUSED
 static BLEUUID GENERIC_SERVICE_GUID("00001800-0000-1000-8000-00805f9b34fb"); //UNUSED
@@ -562,6 +488,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
     }
   }
 };
+#pragma endregion
 
 void initAPIPConfigStruct(WiFi_AP_IPConfig &in_WM_AP_IPconfig)
 {
@@ -603,8 +530,6 @@ void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
 
 uint8_t connectMultiWiFi()
 {
-  #define WIFI_MULTI_1ST_CONNECT_WAITING_MS       0
-  #define WIFI_MULTI_CONNECT_WAITING_MS           100L
   uint8_t status;
   LOGERROR(F("ConnectMultiWiFi with :"));
   if ( (Router_SSID != "") && (Router_Pass != "") )
@@ -651,9 +576,9 @@ uint8_t connectMultiWiFi()
   return status;
 }
 
+//Toggle LED State
 void toggleLED()
 {
-  //toggle state
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
@@ -753,10 +678,6 @@ void check_status()
   static ulong igrillheartbeat_timeout = 0;
   
   ulong current_millis = millis();
-  #define WIFICHECK_INTERVAL           1000L
-  #define LED_INTERVAL                 2000L
-  #define HEARTBEAT_INTERVAL          10000L
-  #define IGRILL_HEARTBEAT_INTERVAL  300000L
 
   // Check WiFi every WIFICHECK_INTERVAL (1) seconds.
   if ((current_millis > checkwifi_timeout) || (checkwifi_timeout == 0))
@@ -857,13 +778,13 @@ void wifi_manager()
 {
   Serial.printf("\nConfig Portal requested.\n");
   digitalWrite(LED_BUILTIN, LED_ON); // turn the LED on by making the voltage LOW to tell us we are in configuration mode.
-  //Local intialization. Once its business is done, there is no need to keep it around
   ESP_WiFiManager ESP_wifiManager("ESP32_iGrillClient");
-  //Check if there is stored WiFi router/password credentials.
-  //If not found, device will remain in configuration mode until switched off via webserver.
+  
+  
   Serial.printf("Opening Configuration Portal. \n");
   Router_SSID = ESP_wifiManager.WiFi_SSID();
   Router_Pass = ESP_wifiManager.WiFi_Pass();
+  //Check if there is stored WiFi router/password credentials.
   if ( !initialConfig && (Router_SSID != "") && (Router_Pass != "") )
   {
     //If valid AP credential and not DRD, set timeout 120s.
@@ -872,17 +793,14 @@ void wifi_manager()
   }
   else
   {
+    //If not found, device will remain in configuration mode until switched off via webserver.
     ESP_wifiManager.setConfigPortalTimeout(0);
     Serial.printf("No timeout : ");
     
     if (initialConfig)
-    {
       Serial.printf("DRD or No stored Credentials..\n");
-    }
     else
-    {
       Serial.printf("No stored Credentials.\n");
-    }
   }
   //Local intialization. Once its business is done, there is no need to keep it around
 
@@ -901,7 +819,8 @@ void wifi_manager()
   ESP_wifiManager.addParameter(&MQTT_PASSWORD_FIELD);
   ESP_wifiManager.addParameter(&MQTT_BASETOPIC_FIELD);
   ESP_wifiManager.setMinimumSignalQuality(-1);
-  ESP_wifiManager.setConfigPortalChannel(0);  // Set config portal channel, default = 1. Use 0 => random channel from 1-13
+  ESP_wifiManager.setConfigPortalChannel(0);  // Set config portal channel, Use 0 => random channel from 1-13
+
 #if !USE_DHCP_IP    
   #if USE_CONFIGURABLE_DNS
     // Set static IP, Gateway, Subnetmask, DNS1 and DNS2. New in v1.0.5
@@ -911,16 +830,12 @@ void wifi_manager()
     ESP_wifiManager.setSTAStaticIPConfig(stationIP, gatewayIP, netMask);
   #endif 
 #endif  
-
-  // New from v1.1.1
 #if USING_CORS_FEATURE
   ESP_wifiManager.setCORSHeader("Your Access-Control-Allow-Origin");
 #endif
 
-  // Start an access point
-  // and goes into a blocking loop awaiting configuration.
-  // Once the user leaves the portal with the exit button
-  // processing will continue
+  // Start an access point and goes into a blocking loop awaiting configuration.
+  // Once the user leaves the portal with the exit button processing will continue
   if (!ESP_wifiManager.startConfigPortal((const char *) ssid.c_str(), password))
   {
     Serial.printf("Not connected to WiFi but continuing anyway.\n");
@@ -993,29 +908,15 @@ bool readConfigFile()
     // Parse all config file parameters, override
     // local config variables with parsed values
     if (json.containsKey(MQTT_SERVER_Label))
-    {
       strcpy(custom_MQTT_SERVER, json[MQTT_SERVER_Label]);
-    }
-
     if (json.containsKey(MQTT_SERVERPORT_Label))
-    {
       strcpy(custom_MQTT_SERVERPORT, json[MQTT_SERVERPORT_Label]);
-    }
-
     if (json.containsKey(MQTT_USERNAME_Label))
-    {
       strcpy(custom_MQTT_USERNAME, json[MQTT_USERNAME_Label]);
-    }
-
     if (json.containsKey(MQTT_PASSWORD_Label))
-    {
       strcpy(custom_MQTT_PASSWORD, json[MQTT_PASSWORD_Label]);
-    }
-
     if (json.containsKey(MQTT_BASETOPIC_Label))
-    {
       strcpy(custom_MQTT_BASETOPIC, json[MQTT_BASETOPIC_Label]);
-    }
   }
   Serial.printf("\nConfig File successfully parsed\n");
   return true;
@@ -1026,20 +927,18 @@ bool writeConfigFile()
   Serial.printf("Saving Config File\n");
   DynamicJsonDocument json(1024);
   // JSONify local configuration parameters
-  json[MQTT_SERVER_Label]      = custom_MQTT_SERVER;
-  json[MQTT_SERVERPORT_Label]  = custom_MQTT_SERVERPORT;
-  json[MQTT_USERNAME_Label]    = custom_MQTT_USERNAME;
-  json[MQTT_PASSWORD_Label]         = custom_MQTT_PASSWORD;
-  json[MQTT_BASETOPIC_Label]         = custom_MQTT_BASETOPIC;
-
+  json[MQTT_SERVER_Label] = custom_MQTT_SERVER;
+  json[MQTT_SERVERPORT_Label] = custom_MQTT_SERVERPORT;
+  json[MQTT_USERNAME_Label] = custom_MQTT_USERNAME;
+  json[MQTT_PASSWORD_Label] = custom_MQTT_PASSWORD;
+  json[MQTT_BASETOPIC_Label] = custom_MQTT_BASETOPIC;
   // Open file for writing
-  File f = FileFS.open(CONFIG_FILE, "w");
+  File f = FileFS.open(CONFIG_FILE, "w"); 
   if (!f)
   {
     Serial.printf("Failed to open Config File for writing\n");
     return false;
   }
-
   serializeJsonPretty(json, Serial);
   // Write data to file and close it
   serializeJson(json, f);
@@ -1048,9 +947,7 @@ bool writeConfigFile()
   return true;
 }
 
-// this function is just to display newly saved data,
-// it is not necessary though, because data is displayed
-// after WiFi manager resets ESP32
+// Display Saved Configuration Information (Trigger by pressing and holding the reset button for a few seconds)
 void newConfigData() 
 {
   Serial.printf("\ncustom_MQTT_SERVER: %s\n",custom_MQTT_SERVER); 
@@ -1176,10 +1073,8 @@ void setup()
 // Loop function
 void loop()
 {
-  // Call the double reset detector loop method every so often,
-  // so that it can recognise when the timeout expires.
-  // You can also call drd.stop() when you wish to no longer
-  // consider the next reset as a double reset.
+  // Call the double reset detector loop method every so often, so that it can recognise when the timeout expires.
+  // You can also call drd.stop() when you wish to no longer consider the next reset as a double reset.
   if (drd)
     drd->loop();
   // this is just for checking if we are connected to WiFi
