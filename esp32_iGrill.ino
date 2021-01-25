@@ -14,10 +14,10 @@ The Credentials will then be saved into LittleFS / SPIFFS file and be used to co
 ************************************
 * Configuration Portal Information *
 ************************************
-Wifi SSID Name: ESP32_iGrillClient
+Wifi SSID Name: iGrillClient_<ESP32_Chip_ID>
 Wifi Password: igrill_client
 
-NOTE: You can change this from the default by editing the code @ Line XXXX before uploading to the device.
+NOTE: You can change this from the default by editing the code @ Line 58 before uploading to the device.
 Wifi MQTT handling based on the example provided by the ESP_WifiManager Library for handling Wifi/MQTT Setup (https://github.com/khoih-prog/ESP_WiFiManager)
 */
 
@@ -26,18 +26,19 @@ Wifi MQTT handling based on the example provided by the ESP_WifiManager Library 
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-#include <PubSubClient.h>       //for MQTT
+#include <PubSubClient.h> //for MQTT
 #include <WiFiMulti.h>
 WiFiMulti wifiMulti;
+#include <ESP_WiFiManager.h> //https://github.com/khoih-prog/ESP_WiFiManager
 #include <BLEDevice.h>
-#include <LITTLEFS.h>             // https://github.com/lorol/LITTLEFS
+#include <LITTLEFS.h> // https://github.com/lorol/LITTLEFS
 FS* filesystem = &LITTLEFS;
 
 const int BUTTON_PIN  = 27;
 const int RED_LED     = 26;
 const int BLUE_LED    = 25;
 
-#include <ESP_DoubleResetDetector.h>      //https://github.com/khoih-prog/ESP_DoubleResetDetector
+#include <ESP_DoubleResetDetector.h> //https://github.com/khoih-prog/ESP_DoubleResetDetector
 DoubleResetDetector* drd = NULL;
 
 uint32_t timer = millis();
@@ -54,7 +55,7 @@ char custom_MQTT_PASSWORD[custom_MQTT_PASSWORD_LEN];
 char custom_MQTT_BASETOPIC[custom_MQTT_BASETOPIC_LEN];
 
 // SSID and PW for Config Portal
-String ssid = "ESP32_iGrillClient";
+String ssid = "iGrillClient_" + String(ESP_getChipId(), HEX);
 const char* password = "igrill_client";
 
 // SSID and PW for your Router
@@ -112,13 +113,18 @@ IPAddress APStaticIP  = IPAddress(192, 168, 100, 1);
 IPAddress APStaticGW  = IPAddress(192, 168, 100, 1);
 IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
 
-#include <ESP_WiFiManager.h>              //https://github.com/khoih-prog/ESP_WiFiManager
 WiFi_AP_IPConfig  WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
 
 // Create an ESP32 WiFiClient class to connect to the MQTT server
 WiFiClient *client = NULL;
 PubSubClient *mqtt_client = NULL;
+
+void IGRILLLOGGER(String logMsg, int requiredLVL)
+{
+  if(requiredLVL <= IGRILL_DEBUG_LVL)
+    Serial.printf("%s\n", logMsg.c_str());
+}
 
 #pragma region iGrill_BLE
 static const uint8_t chalBuf[] = {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}; //iGrill Authentcation Payload
@@ -170,12 +176,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      // Serial.printf(" ! Probe 1 Disconnected!\n");
+      IGRILLLOGGER(" ! Probe 1 Disconnected!", 2);
       publishProbeTemp(1,-1);
     }
     else
     {
-      // Serial.printf(" * Probe 1 Temp: %d\n",pData[0]);
+      IGRILLLOGGER(" * Probe 1 Temp: "+ String(pData[0]),2);
       publishProbeTemp(1,pData[0]);
     }
 
@@ -184,12 +190,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      // Serial.printf(" ! Probe 2 Disconnected!\n");
+      IGRILLLOGGER(" ! Probe 2 Disconnected!",2);
       publishProbeTemp(2,-1);
     }
     else
     {
-      // Serial.printf(" * Probe 2 Temp: %d\n",pData[0]);
+      IGRILLLOGGER(" * Probe 2 Temp: "+String(pData[0]),2);
       publishProbeTemp(2,pData[0]);
     }
 
@@ -198,12 +204,12 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      // Serial.printf(" ! Probe 3 Disconnected!\n");
+      IGRILLLOGGER(" ! Probe 3 Disconnected!",2);
       publishProbeTemp(3,-1);
     }
     else
     {
-      // Serial.printf(" * Probe 3 Temp: %d\n",pData[0]);
+      IGRILLLOGGER(" * Probe 3 Temp: "+String(pData[0]),2);
       publishProbeTemp(3,pData[0]);
     }
 
@@ -212,19 +218,19 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   {
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
-      // Serial.printf(" ! Probe 4 Disconnected!\n");
+      IGRILLLOGGER(" ! Probe 4 Disconnected!",2);
       publishProbeTemp(4,-1);
     }
     else
     {
-      // Serial.printf(" * Probe 4 Temp: %d\n",pData[0]);
+      IGRILLLOGGER(" * Probe 4 Temp: "+String(pData[0]),2);
       publishProbeTemp(4,pData[0]);
     }
 
   }
   else if(BATTERY_LEVEL.equals(pBLERemoteCharacteristic->getUUID()))
   {
-    // Serial.printf(" %% Battery Level: %d%%\n",pData[0]);
+    IGRILLLOGGER(" %% Battery Level: " + String(pData[0]) + "%% ",2);
     publishBattery(pData[0]);
   }
 }
@@ -237,8 +243,8 @@ class MyClientCallback : public BLEClientCallbacks
 
   void onDisconnect(BLEClient* pclient)
   {
-    Serial.printf(" - iGrill Disconnected!\n");
-    Serial.printf(" - Freeing Memory....\n");
+    IGRILLLOGGER(" - iGrill Disconnected!", 1);
+    IGRILLLOGGER(" - Freeing Memory....", 1);
     //Lost Connection to Device Resetting all Variables....
     connected = false; //No longer connected to iGrill
     //Free up memory
@@ -252,7 +258,7 @@ class MyClientCallback : public BLEClientCallbacks
     free(iGrillAuthService);
     free(iGrillService);
     free(iGrillBattService);
-    Serial.printf(" - Done!\n");
+    IGRILLLOGGER(" - Done!", 1);
     reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
 };
@@ -260,10 +266,10 @@ class MyClientCallback : public BLEClientCallbacks
 //Register Callback for iGrill Probes
 void setupProbes()
 {
-    Serial.println(" - Setting up Probes...");
+    IGRILLLOGGER(" - Setting up Probes...",1);
     if (iGrillService == nullptr) 
     {
-      Serial.printf(" - Setting up Probes Failed!\n");
+      IGRILLLOGGER(" - Setting up Probes Failed!",1);
       iGrillClient->disconnect();
     }
     else
@@ -274,30 +280,30 @@ void setupProbes()
         if(probe1TempCharacteristic->canNotify())
         {
           probe1TempCharacteristic->registerForNotify(notifyCallback);
-          Serial.println("  -- Probe 1 Setup!");
+          IGRILLLOGGER("  -- Probe 1 Setup!",1);
         }
         probe2TempCharacteristic = iGrillService->getCharacteristic(PROBE2_TEMPERATURE);
         if(probe2TempCharacteristic->canNotify())
         {
           probe2TempCharacteristic->registerForNotify(notifyCallback);
-          Serial.println("  -- Probe 2 Setup!");
+          IGRILLLOGGER("  -- Probe 2 Setup!",1);
         }
         probe3TempCharacteristic = iGrillService->getCharacteristic(PROBE3_TEMPERATURE);
         if(probe3TempCharacteristic->canNotify())
         {
           probe3TempCharacteristic->registerForNotify(notifyCallback);
-          Serial.println("  -- Probe 3 Setup!");
+          IGRILLLOGGER("  -- Probe 3 Setup!",1);
         }
         probe4TempCharacteristic = iGrillService->getCharacteristic(PROBE4_TEMPERATURE);
         if(probe4TempCharacteristic->canNotify())
         {
           probe4TempCharacteristic->registerForNotify(notifyCallback);
-          Serial.println("  -- Probe 4 Setup!");
+          IGRILLLOGGER("  -- Probe 4 Setup!",1);
         }
       }
       catch(...)
       {
-        Serial.printf(" - Setting up Probes Failed!\n");
+        IGRILLLOGGER(" - Setting up Probes Failed!",1);
         iGrillClient->disconnect();
       }
     }
@@ -309,12 +315,11 @@ void getiGrillInfo()
   try
   {
     std::string fwVersion = iGrillAuthService->getCharacteristic(FIRMWARE_VERSION)->readValue();
-    // Serial.printf(" - iGrill Firmware Version: %s\n", fwVersion.c_str());
     publishSystemInfo(fwVersion.c_str(), myDevice->getAddress().toString().c_str(), myDevice->getRSSI());
   }
   catch(...)
   {
-    Serial.printf("Error obtaining Firmware Info\n");
+    IGRILLLOGGER("Error obtaining Firmware Info", 1);
     iGrillClient->disconnect();
   }
 }
@@ -322,13 +327,13 @@ void getiGrillInfo()
 //Register Callback for iGrill Device Battery Level
 bool setupBatteryCharacteristic()
 {
-  Serial.println(" - Setting up Battery Characteristic...");
+  IGRILLLOGGER(" - Setting up Battery Characteristic...",1);
   try
   {
     batteryCharacteristic = iGrillBattService->getCharacteristic(BATTERY_LEVEL);
     if (batteryCharacteristic == nullptr)
     {
-      Serial.printf(" - Setting up Battery Characteristic Failed!\n");
+      IGRILLLOGGER(" - Setting up Battery Characteristic Failed!", 1);
       iGrillClient->disconnect();
       return false;
     }
@@ -337,7 +342,7 @@ bool setupBatteryCharacteristic()
   }
   catch(...)
   {
-    Serial.printf(" - Setting up Battery Characteristic Failed!\n");
+    IGRILLLOGGER(" - Setting up Battery Characteristic Failed!", 1);
     iGrillClient->disconnect();
     return false;
   }
@@ -352,17 +357,17 @@ class MySecurity : public BLESecurityCallbacks
 	}
 	void onPassKeyNotify(uint32_t pass_key)
 	{
-    Serial.printf(" - The passkey Notify number:%d\n", pass_key);
+    IGRILLLOGGER(" - The passkey Notify number: " + String(pass_key),0);
 	}
 	bool onConfirmPIN(uint32_t pass_key)
 	{
-    Serial.printf(" - The passkey YES/NO number:%d\n", pass_key);
+    IGRILLLOGGER(" - The passkey YES/NO number: " + String(pass_key), 0);
 	  vTaskDelay(5000);
 		return true;
 	}
 	bool onSecurityRequest()
 	{
-		Serial.printf(" - Security Request\n");
+		IGRILLLOGGER(" - Security Request", 0);
 		return true;
 	}
 	void onAuthenticationComplete(esp_ble_auth_cmpl_t auth_cmpl)
@@ -383,7 +388,8 @@ class MySecurity : public BLESecurityCallbacks
 */
 bool connectToServer() 
 {
-    Serial.printf("Connecting to iGrill (%s)\n",myDevice->getAddress().toString().c_str());
+    String temp = "Connecting to iGrill Device: " + String(myDevice->getAddress().toString().c_str());
+    IGRILLLOGGER(temp ,1);
     //Setting up the iGrill Pairing Paramaters (Without Bonding you can't read the Temp Probes)
     BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
 	  BLEDevice::setSecurityCallbacks(new MySecurity());
@@ -398,7 +404,7 @@ bool connectToServer()
     {
       free(iGrillClient);
       reScan = true;
-      Serial.printf("Connection Failed!\n");
+      IGRILLLOGGER("Connection Failed!", 1);
       return false;
     }
     delay(1*1000);
@@ -406,22 +412,22 @@ bool connectToServer()
     {
       free(iGrillClient);
       reScan = true;
-      Serial.printf("Connection Failed!\n");
+      IGRILLLOGGER("Connection Failed!",1);
       return false;
     }
-    Serial.println(" - Created client");
+    IGRILLLOGGER(" - Created client",1);
     iGrillClient->setClientCallbacks(new MyClientCallback());
     // Connect to the remote BLE Server.
-    Serial.println(" - Connected to iGrill BLE Server");
+    IGRILLLOGGER(" - Connected to iGrill BLE Server",1);
     delay(1*1000);
 
     // Obtain a reference to the authentication service we are after in the remote BLE server.
-    Serial.println(" - Performing iGrill App Authentication");
+    IGRILLLOGGER(" - Performing iGrill App Authentication",1);
     iGrillAuthService = iGrillClient->getService(AUTH_SERVICE_UUID);
     delay(1*1000);
     if (iGrillAuthService == nullptr) 
     {
-      Serial.printf(" - Authentication Failed (iGrillAuthService is null)\n");
+      IGRILLLOGGER(" - Authentication Failed (iGrillAuthService is null)",1);
       iGrillClient->disconnect();
       return false;
     }
@@ -435,19 +441,19 @@ bool connectToServer()
         authRemoteCharacteristic = iGrillAuthService->getCharacteristic(APP_CHALLENGE);
         if (authRemoteCharacteristic == nullptr) 
         {
-          Serial.printf(" - Authentication Failed (authRemoteCharacteristic is null)!\n");
+          IGRILLLOGGER(" - Authentication Failed (authRemoteCharacteristic is null)!",1);
         }
         //Start of Authentication Sequence
-        Serial.printf(" - Writing iGrill App Challenge...\n");
+        IGRILLLOGGER(" - Writing iGrill App Challenge...",1);
         authRemoteCharacteristic->writeValue((uint8_t*)chalBuf, sizeof(chalBuf), true);
         delay(500);
-        Serial.printf(" - Reading iGrill Device Challenge\n");
+        IGRILLLOGGER(" - Reading iGrill Device Challenge",1);
         std::string encrypted_device_challenge = iGrillAuthService->getCharacteristic(DEVICE_CHALLENGE)->readValue();
         delay(500);
-        Serial.printf(" - Writing Encrypted iGrill Device Challenge...\n");
+        IGRILLLOGGER(" - Writing Encrypted iGrill Device Challenge...",1);
         iGrillAuthService->getCharacteristic(DEVICE_RESPONSE)->writeValue(encrypted_device_challenge, true);
         //End of Authentication Sequence
-        Serial.printf(" - Authentication Complete\n");
+        IGRILLLOGGER(" - Authentication Complete",1);
         iGrillService = iGrillClient->getService(SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
         delay(1*1000);
         iGrillBattService = iGrillClient->getService(BATTERY_SERVICE_UUID); //Obtain a reference for the iGrill Battery Service that we use for Getting the Battery Level
@@ -458,14 +464,14 @@ bool connectToServer()
       }
       catch(...)
       {
-        Serial.printf(" - Authentication Failed!\n");
+        IGRILLLOGGER(" - Authentication Failed!",1);
         iGrillClient->disconnect();
         return false;
       }
     }
     else
     {
-      Serial.printf(" - Authentication Failed (lost connection to device)!\n");
+      IGRILLLOGGER(" - Authentication Failed (lost connection to device)!",1);
       iGrillClient->disconnect();
       return false;
     }
@@ -480,7 +486,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
     // We have found a device, let us now see if it contains the iGrill service
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(SERVICE_UUID)) 
     {
-      Serial.printf("iGrill Device Discovered (%s %d db)\n", advertisedDevice.getAddress().toString().c_str(), advertisedDevice.getRSSI());
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
@@ -588,7 +593,6 @@ bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, in
   {
     if(mqtt_client->connected())
     {
-      // Serial.printf("Publishing iGrill Client Info to MQTT\n");
       String topic = (String)MQTT_BASETOPIC + "/igrill/systeminfo";
       String payload = "Uptime: "+getSystemUptime()+"\nNetwork: "+WiFi.SSID()+"\nSignal Strength: "+String(WiFi.RSSI())+"\nIP Address: " + WiFi.localIP().toString() +"\niGrill Device: " + iGrillBLEAddress + "\niGrill Firmware Version: " + fwVersion + "\niGrill Signal Strength: "+String(iGrillRSSI);
       mqtt_client->publish(topic.c_str(),payload.c_str());
@@ -596,7 +600,6 @@ bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, in
   }
   else
   {
-    Serial.printf("\nInitiating connection to MQTT\n");
     connectMQTT();
   }
 }
@@ -607,14 +610,12 @@ void publishProbeTemp(int probeNum, int temp)
   {
     if(mqtt_client->connected())
     {
-      // Serial.printf("Publishing Probe Temp to MQTT\n");
       String topic = (String)MQTT_BASETOPIC + "/igrill/probe_" + String(probeNum);
       mqtt_client->publish(topic.c_str(),String(temp).c_str());
     }
   }
   else
   {
-    Serial.printf("\nInitiating connection to MQTT\n");
     connectMQTT();
   }
 }
@@ -625,14 +626,12 @@ void publishBattery(int battPercent)
   {
     if(mqtt_client->connected())
     {
-      // Serial.printf("Publishing Battery Level to MQTT\n");
       String topic = (String)MQTT_BASETOPIC + "/igrill/battery_level";
       mqtt_client->publish(topic.c_str(),String(battPercent).c_str());
     }
   }
   else
   {
-    Serial.printf("\nInitiating connection to MQTT\n");
     connectMQTT();
   }
 }
@@ -661,7 +660,7 @@ void check_WiFi()
 {
   if ( (WiFi.status() != WL_CONNECTED) )
   {
-    Serial.printf("\nWiFi lost. Call connectMultiWiFi in loop\n");
+    IGRILLLOGGER("\nWiFi lost. Call connectMultiWiFi in loop",0);
     delete(mqtt_client);
     delete(client);
     client=NULL;
@@ -759,29 +758,29 @@ void saveConfigData()
 //event handler functions for button
 static void handleClick() 
 {
-  Serial.printf("Button clicked!\n");
+  IGRILLLOGGER("Button clicked!", 0);
   wifi_manager();
 }
 
 static void handleDoubleClick() 
 {
-  Serial.printf("Button double clicked!\n");
+  IGRILLLOGGER("Button double clicked!", 0);
 }
 
 static void handleLongPressStop() 
 {
-  Serial.printf("Button pressed for long time and then released!\n");
+  IGRILLLOGGER("Button pressed for long time and then released!", 0);
   newConfigData();
 }
 
 void wifi_manager()
 {
-  Serial.printf("\nConfig Portal requested.\n");
+  IGRILLLOGGER("\nConfig Portal requested.", 0);
   digitalWrite(LED_BUILTIN, LED_ON); // turn the LED on by making the voltage LOW to tell us we are in configuration mode.
   ESP_WiFiManager ESP_wifiManager("ESP32_iGrillClient");
   
   
-  Serial.printf("Opening Configuration Portal. \n");
+  IGRILLLOGGER("Opening Configuration Portal. ", 0);
   Router_SSID = ESP_wifiManager.WiFi_SSID();
   Router_Pass = ESP_wifiManager.WiFi_Pass();
   //Check if there is stored WiFi router/password credentials.
@@ -789,18 +788,18 @@ void wifi_manager()
   {
     //If valid AP credential and not DRD, set timeout 120s.
     ESP_wifiManager.setConfigPortalTimeout(120);
-    Serial.printf("Got stored Credentials. Timeout 120s\n");
+    IGRILLLOGGER("Got stored Credentials. Timeout 120s", 0);
   }
   else
   {
     //If not found, device will remain in configuration mode until switched off via webserver.
     ESP_wifiManager.setConfigPortalTimeout(0);
-    Serial.printf("No timeout : ");
+    IGRILLLOGGER("No timeout : ", 0);
     
     if (initialConfig)
-      Serial.printf("DRD or No stored Credentials..\n");
+      IGRILLLOGGER("DRD or No stored Credentials..", 0);
     else
-      Serial.printf("No stored Credentials.\n");
+      IGRILLLOGGER("No stored Credentials.", 0);
   }
   //Local intialization. Once its business is done, there is no need to keep it around
 
@@ -838,11 +837,11 @@ void wifi_manager()
   // Once the user leaves the portal with the exit button processing will continue
   if (!ESP_wifiManager.startConfigPortal((const char *) ssid.c_str(), password))
   {
-    Serial.printf("Not connected to WiFi but continuing anyway.\n");
+    IGRILLLOGGER("Not connected to WiFi but continuing anyway.", 0);
   }
   else
   {
-    Serial.printf("WiFi Connected!\n");
+    IGRILLLOGGER("WiFi Connected!", 0);
   }
   // Only clear then save data if CP entered and with new valid Credentials
   // No CP => stored getSSID() = ""
@@ -888,7 +887,7 @@ bool readConfigFile()
   File f = FileFS.open(CONFIG_FILE, "r");// this opens the config file in read-mode
   if (!f)
   {
-    Serial.printf("Config File not found\n");
+    IGRILLLOGGER("Config File not found", 0);
     return false;
   }
   else
@@ -901,7 +900,7 @@ bool readConfigFile()
     auto deserializeError = deserializeJson(json, buf.get());    
     if ( deserializeError )
     {
-      Serial.printf("JSON parseObject() failed\n");
+      IGRILLLOGGER("JSON parseObject() failed", 0);
       return false;
     }  
     serializeJson(json, Serial);
@@ -918,13 +917,13 @@ bool readConfigFile()
     if (json.containsKey(MQTT_BASETOPIC_Label))
       strcpy(custom_MQTT_BASETOPIC, json[MQTT_BASETOPIC_Label]);
   }
-  Serial.printf("\nConfig File successfully parsed\n");
+  IGRILLLOGGER("\nConfig File successfully parsed", 0);
   return true;
 }
 
 bool writeConfigFile() 
 {
-  Serial.printf("Saving Config File\n");
+  IGRILLLOGGER("Saving Config File", 0);
   DynamicJsonDocument json(1024);
   // JSONify local configuration parameters
   json[MQTT_SERVER_Label] = custom_MQTT_SERVER;
@@ -936,53 +935,46 @@ bool writeConfigFile()
   File f = FileFS.open(CONFIG_FILE, "w"); 
   if (!f)
   {
-    Serial.printf("Failed to open Config File for writing\n");
+    IGRILLLOGGER("Failed to open Config File for writing", 0);
     return false;
   }
   serializeJsonPretty(json, Serial);
   // Write data to file and close it
   serializeJson(json, f);
   f.close();
-  Serial.printf("\nConfig File successfully saved\n");
+  IGRILLLOGGER("\nConfig File successfully saved", 0);
   return true;
 }
 
 // Display Saved Configuration Information (Trigger by pressing and holding the reset button for a few seconds)
 void newConfigData() 
 {
-  Serial.printf("\ncustom_MQTT_SERVER: %s\n",custom_MQTT_SERVER); 
-  Serial.printf("custom_MQTT_SERVERPORT: %s\n",custom_MQTT_SERVERPORT); 
-  Serial.printf("custom_MQTT_USERNAME: %s\n",custom_MQTT_USERNAME); 
-  Serial.printf("custom_MQTT_PASSWORD: %s\n", custom_MQTT_PASSWORD); 
-  Serial.printf("custom_MQTT_BASETOPIC: %s\n", custom_MQTT_BASETOPIC); 
+  IGRILLLOGGER("custom_MQTT_SERVER: " + String(custom_MQTT_SERVER), 0); 
+  IGRILLLOGGER("custom_MQTT_SERVERPORT: " + String(custom_MQTT_SERVERPORT), 0); 
+  IGRILLLOGGER("custom_MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0); 
+  IGRILLLOGGER("custom_MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0); 
+  IGRILLLOGGER("custom_MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
 }
 
 void connectMQTT() 
 {
-  Serial.printf("Connecting to MQTT...\n");
+  IGRILLLOGGER("Connecting to MQTT...", 0);
   if (!client)
-  {
     client = new WiFiClient();
-    Serial.printf("\nCreating new WiFi client object : %s\n",client?"OK":"failed");
-  }
   if(!mqtt_client)
   {
     mqtt_client = new PubSubClient(*client);
     mqtt_client->setBufferSize(512);
-    Serial.printf("\nCreating new MQTT client object : %s\n",mqtt_client?"OK":"failed");
     mqtt_client->setServer(custom_MQTT_SERVER, atoi(custom_MQTT_SERVERPORT));
   }
-  Serial.printf("MQTT Server: %s:%d\n", custom_MQTT_SERVER,atoi(custom_MQTT_SERVERPORT));
-  Serial.printf("MQTT User: %s\n", custom_MQTT_USERNAME);
-  Serial.printf("MQTT Password: %s\n", custom_MQTT_PASSWORD);
-  Serial.printf("MQTT BASETOPIC: %s\n", custom_MQTT_BASETOPIC);
-  if (!mqtt_client->connect("iGrill", custom_MQTT_USERNAME, custom_MQTT_PASSWORD)) 
+
+  if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD)) 
   {
-    Serial.printf("MQTT connection failed: %d\n",mqtt_client->state());
+    IGRILLLOGGER("MQTT connection failed: " + String(mqtt_client->state()), 0);
   }
   else
   {
-    Serial.printf("MQTT connected\n\n");
+    IGRILLLOGGER("MQTT connected", 0);
   }
 }
 
@@ -992,19 +984,19 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
   delay(200);
-  Serial.printf("\nStarting iGrill BLE Client using %s on %s",String(FS_Name),String(ARDUINO_BOARD));
-  Serial.printf("%s\n%s\n",ESP_WIFIMANAGER_VERSION, ESP_DOUBLE_RESET_DETECTOR_VERSION);
+  IGRILLLOGGER("Starting iGrill BLE Client using " + String(FS_Name) + " on " + String(ARDUINO_BOARD), 0);
+  IGRILLLOGGER(String(ESP_WIFIMANAGER_VERSION) +" \n" + String(ESP_DOUBLE_RESET_DETECTOR_VERSION), 0);
   // Initialize the LED digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   // Format FileFS if not yet
   if (!FileFS.begin(true))
   {
-    Serial.printf("%s failed! AutoFormatting.\n"),FS_Name;
+    IGRILLLOGGER(String(FS_Name) + " failed! AutoFormatting.", 0);
   }
 
   if (!readConfigFile())
   {
-    Serial.printf("Failed to read configuration file, using default values\n");
+    IGRILLLOGGER("Failed to read configuration file, using default values", 0);
   }
 
   initAPIPConfigStruct(WM_AP_IPconfig);
@@ -1012,18 +1004,18 @@ void setup()
 
   if (!readConfigFile())
   {
-    Serial.printf("Can't read Config File, using default values\n");
+    IGRILLLOGGER("Can't read Config File, using default values", 0);
   }
 
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   if (!drd)
   {
-    Serial.printf("Can't instantiate. Disable DRD feature\n");
+    IGRILLLOGGER("Can't instantiate. Disable DRD feature", 0);
   }
   else if (drd->detectDoubleReset())
   {
     // DRD, disable timeout.
-    Serial.printf("Open Config Portal without Timeout: Double Reset Detected\n");
+    IGRILLLOGGER("Open Config Portal without Timeout: Double Reset Detected", 0);
     initialConfig = true;
   }
  
@@ -1049,12 +1041,12 @@ void setup()
 
     if (initialConfig)
     {
-      Serial.printf("Open Config Portal without Timeout: No stored WiFi Credentials\n");
+      IGRILLLOGGER("Open Config Portal without Timeout: No stored WiFi Credentials", 0);
       wifi_manager();
     }
     else if ( WiFi.status() != WL_CONNECTED ) 
     {
-      Serial.printf("ConnectMultiWiFi in setup\n");
+      IGRILLLOGGER("ConnectMultiWiFi in setup", 0);
       connectMultiWiFi();
     }
   }
@@ -1098,7 +1090,7 @@ void loop()
   }
   else if(reScan)
   {
-    Serial.printf("Scanning for iGrill Devices...\n");
+    IGRILLLOGGER("Scanning for iGrill Devices...", 0);
     BLEDevice::getScan()->start(0);
   }
   check_status();

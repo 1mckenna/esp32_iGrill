@@ -4,6 +4,11 @@
 //Use from 0 to 4. Higher number, more debugging messages and memory usage.
 #define _WIFIMGR_LOGLEVEL_    1
 
+// Enable iGrill BLE Client Debugging which will print detailed information to Serial Port
+// Level 0: Print only Basic Info (Default)
+// Level 1: Level 0 + Print BLE Connection Info
+// Level 2: Level 1 + Print everything including temp/batt callbacks
+#define IGRILL_DEBUG_LVL 1
 // Setup File System Information (Needed to Read and Store the JSON )
 #define FileFS        LITTLEFS
 #define FS_Name       "LittleFS"
