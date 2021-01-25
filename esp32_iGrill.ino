@@ -123,7 +123,7 @@ PubSubClient *mqtt_client = NULL;
 void IGRILLLOGGER(String logMsg, int requiredLVL)
 {
   if(requiredLVL <= IGRILL_DEBUG_LVL)
-    Serial.printf("%s\n", logMsg.c_str());
+    Serial.printf("[II] %s\n", logMsg.c_str());
 }
 
 #pragma region iGrill_BLE
@@ -372,7 +372,7 @@ class MySecurity : public BLESecurityCallbacks
 	}
 	void onAuthenticationComplete(esp_ble_auth_cmpl_t auth_cmpl)
 	{
-    Serial.printf(" - iGrill Pair Status: %s\n", auth_cmpl.success ? "Paired" : "Disconnected");
+    Serial.printf("[II] - iGrill Pair Status: %s\n", auth_cmpl.success ? "Paired" : "Disconnected");
 	}
 };
 
@@ -958,6 +958,7 @@ void newConfigData()
 
 void connectMQTT() 
 {
+  String lastWillTopic = (String)MQTT_BASETOPIC + "/igrill/mqttstatus";
   IGRILLLOGGER("Connecting to MQTT...", 0);
   if (!client)
     client = new WiFiClient();
@@ -968,13 +969,14 @@ void connectMQTT()
     mqtt_client->setServer(custom_MQTT_SERVER, atoi(custom_MQTT_SERVERPORT));
   }
 
-  if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD)) 
+  if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD, lastWillTopic.c_str(), 1, true, "offline"))
   {
     IGRILLLOGGER("MQTT connection failed: " + String(mqtt_client->state()), 0);
   }
   else
   {
     IGRILLLOGGER("MQTT connected", 0);
+    mqtt_client->publish(lastWillTopic.c_str(),"online");
   }
 }
 
@@ -985,7 +987,8 @@ void setup()
   while (!Serial);
   delay(200);
   IGRILLLOGGER("Starting iGrill BLE Client using " + String(FS_Name) + " on " + String(ARDUINO_BOARD), 0);
-  IGRILLLOGGER(String(ESP_WIFIMANAGER_VERSION) +" \n" + String(ESP_DOUBLE_RESET_DETECTOR_VERSION), 0);
+  IGRILLLOGGER(String(ESP_WIFIMANAGER_VERSION), 0);
+  IGRILLLOGGER(String(ESP_DOUBLE_RESET_DETECTOR_VERSION), 0);
   // Initialize the LED digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   // Format FileFS if not yet
