@@ -120,13 +120,14 @@ WiFi_STA_IPConfig WM_STA_IPconfig;
 WiFiClient *client = NULL;
 PubSubClient *mqtt_client = NULL;
 
+//iGrill BLE Client Logging Function
 void IGRILLLOGGER(String logMsg, int requiredLVL)
 {
   if(requiredLVL <= IGRILL_DEBUG_LVL)
     Serial.printf("[II] %s\n", logMsg.c_str());
 }
 
-#pragma region iGrill_BLE
+#pragma region iGrill_BLE_Variables
 static const uint8_t chalBuf[] = {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}; //iGrill Authentcation Payload
 static BLEUUID GENERIC_ATTRIBUTE("00001801-0000-1000-8000-00805f9b34fb"); //UNUSED
 static BLEUUID GENERIC_SERVICE_GUID("00001800-0000-1000-8000-00805f9b34fb"); //UNUSED
@@ -167,7 +168,8 @@ static BLERemoteService* iGrillService = nullptr; //iGrill BLE Service used for 
 static BLERemoteService* iGrillBattService = nullptr; //iGrill BLE Service used to read battery level
 
 static BLEAdvertisedDevice* myDevice;
-
+#pragma endregion
+#pragma region iGrill_BLE_Functions
 //The registered iGrill Characteristics call this function when their values change
 //We then determine the BLEUUID to figure out how to correctly parse the info then print it to Serial and send to an MQTT server
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData,  size_t length,  bool isNotify)
@@ -372,7 +374,7 @@ class MySecurity : public BLESecurityCallbacks
 	}
 	void onAuthenticationComplete(esp_ble_auth_cmpl_t auth_cmpl)
 	{
-    Serial.printf("[II] - iGrill Pair Status: %s\n", auth_cmpl.success ? "Paired" : "Disconnected");
+    Serial.printf("[II]  - iGrill Pair Status: %s\n", auth_cmpl.success ? "Paired" : "Disconnected");
 	}
 };
 
@@ -494,6 +496,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
   }
 };
 #pragma endregion
+#pragma region WIFI_Fuctions
 
 void initAPIPConfigStruct(WiFi_AP_IPConfig &in_WM_AP_IPconfig)
 {
@@ -581,61 +584,6 @@ uint8_t connectMultiWiFi()
   return status;
 }
 
-//Toggle LED State
-void toggleLED()
-{
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-}
-
-bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, int iGrillRSSI)
-{
-  if(mqtt_client)
-  {
-    if(mqtt_client->connected())
-    {
-      String topic = (String)MQTT_BASETOPIC + "/igrill/systeminfo";
-      String payload = "Uptime: "+getSystemUptime()+"\nNetwork: "+WiFi.SSID()+"\nSignal Strength: "+String(WiFi.RSSI())+"\nIP Address: " + WiFi.localIP().toString() +"\niGrill Device: " + iGrillBLEAddress + "\niGrill Firmware Version: " + fwVersion + "\niGrill Signal Strength: "+String(iGrillRSSI);
-      mqtt_client->publish(topic.c_str(),payload.c_str());
-    }
-  }
-  else
-  {
-    connectMQTT();
-  }
-}
-
-void publishProbeTemp(int probeNum, int temp)
-{
-  if(mqtt_client)
-  {
-    if(mqtt_client->connected())
-    {
-      String topic = (String)MQTT_BASETOPIC + "/igrill/probe_" + String(probeNum);
-      mqtt_client->publish(topic.c_str(),String(temp).c_str());
-    }
-  }
-  else
-  {
-    connectMQTT();
-  }
-}
-
-void publishBattery(int battPercent)
-{
-  if(mqtt_client)
-  {
-    if(mqtt_client->connected())
-    {
-      String topic = (String)MQTT_BASETOPIC + "/igrill/battery_level";
-      mqtt_client->publish(topic.c_str(),String(battPercent).c_str());
-    }
-  }
-  else
-  {
-    connectMQTT();
-  }
-}
-
 void heartBeatPrint()
 {
   static int num = 1;
@@ -667,110 +615,6 @@ void check_WiFi()
     mqtt_client=NULL;
     connectMultiWiFi();
   }
-}
-
-void check_status()
-{
-  static ulong checkstatus_timeout  = 0;
-  static ulong LEDstatus_timeout    = 0;
-  static ulong checkwifi_timeout    = 0;
-  static ulong igrillheartbeat_timeout = 0;
-  
-  ulong current_millis = millis();
-
-  // Check WiFi every WIFICHECK_INTERVAL (1) seconds.
-  if ((current_millis > checkwifi_timeout) || (checkwifi_timeout == 0))
-  {
-    check_WiFi();
-    checkwifi_timeout = current_millis + WIFICHECK_INTERVAL;
-  }
-
-  if ((current_millis > LEDstatus_timeout) || (LEDstatus_timeout == 0))
-  {
-    // Toggle LED at LED_INTERVAL = 2s
-    toggleLED();
-    LEDstatus_timeout = current_millis + LED_INTERVAL;
-  }
-
-  // Print hearbeat every HEARTBEAT_INTERVAL (10) seconds.
-  if ((current_millis > checkstatus_timeout) || (checkstatus_timeout == 0))
-  { 
-    heartBeatPrint();
-    checkstatus_timeout = current_millis + HEARTBEAT_INTERVAL;
-  }
-
-  // Print iGrill System Info every IGRILL_HEARTBEAT_INTERVAL (5) minutes.
-  if ((current_millis > igrillheartbeat_timeout) || (igrillheartbeat_timeout == 0))
-  { 
-    getiGrillInfo();
-    igrillheartbeat_timeout = current_millis + IGRILL_HEARTBEAT_INTERVAL;
-  }
-}
-
-String getSystemUptime()
-{
-  long millisecs = millis();
-  int systemUpTimeMn = int((millisecs / (1000 * 60)) % 60);
-  int systemUpTimeHr = int((millisecs / (1000 * 60 * 60)) % 24);
-  int systemUpTimeDy = int((millisecs / (1000 * 60 * 60 * 24)) % 365);
-  return String(systemUpTimeDy)+"d:"+String(systemUpTimeHr)+"h:"+String(systemUpTimeMn)+"m";
-}
-
-bool loadConfigData()
-{
-  File file = FileFS.open(CONFIG_FILENAME, "r");
-  LOGERROR(F("LoadWiFiCfgFile "));
-  memset(&WM_config,       0, sizeof(WM_config));
-  memset(&WM_STA_IPconfig, 0, sizeof(WM_STA_IPconfig));
-  if (file)
-  {
-    file.readBytes((char *) &WM_config,   sizeof(WM_config));
-    file.readBytes((char *) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
-    file.close();
-    LOGERROR(F("OK"));
-    displayIPConfigStruct(WM_STA_IPconfig);
-    return true;
-  }
-  else
-  {
-    LOGERROR(F("failed"));
-    return false;
-  }
-}
-    
-void saveConfigData()
-{
-  File file = FileFS.open(CONFIG_FILENAME, "w");
-  LOGERROR(F("SaveWiFiCfgFile "));
-  if (file)
-  {
-    file.write((uint8_t*) &WM_config,   sizeof(WM_config));
-    file.write((uint8_t*) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
-    file.close();
-    LOGERROR(F("OK"));
-  }
-  else
-  {
-    LOGERROR(F("failed"));
-  }
-}
-
-//event handler functions for button
-static void handleClick() 
-{
-  IGRILLLOGGER("Button clicked!", 0);
-  wifi_manager();
-}
-
-static void handleDoubleClick() 
-{
-  IGRILLLOGGER("Button double clicked!", 0);
-}
-
-static void handleLongPressStop() 
-{
-  IGRILLLOGGER("Button pressed for long time and then released!", 0);
-  newConfigData();
 }
 
 void wifi_manager()
@@ -882,6 +726,187 @@ void wifi_manager()
   digitalWrite(LED_BUILTIN, LED_OFF); // Turn LED off as we are not in configuration mode.
 }
 
+
+#pragma endregion
+#pragma region MQTT_Related_Functions
+//Connect to MQTT Server
+void connectMQTT() 
+{
+  String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  IGRILLLOGGER("Connecting to MQTT...", 0);
+  if (!client)
+    client = new WiFiClient();
+  if(!mqtt_client)
+  {
+    mqtt_client = new PubSubClient(*client);
+    mqtt_client->setBufferSize(512);
+    mqtt_client->setServer(custom_MQTT_SERVER, atoi(custom_MQTT_SERVERPORT));
+  }
+
+  if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD, lastWillTopic.c_str(), 1, true, "offline"))
+  {
+    IGRILLLOGGER("MQTT connection failed: " + String(mqtt_client->state()), 0);
+    delete(mqtt_client);
+    delete(client);
+    mqtt_client=NULL;
+    client=NULL;
+  }
+  else
+  {
+    IGRILLLOGGER("MQTT connected", 0);
+    mqtt_client->publish(lastWillTopic.c_str(),"online");
+    mqttAnnounce();
+  }
+}
+
+//Publish iGrill BLE Client and connected iGrill info to MQTT
+bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, int iGrillRSSI)
+{
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      String payload="";
+      DynamicJsonDocument sysinfoJSON(1024);
+      sysinfoJSON["name"] = "igrill_"+String(ESP_getChipId(), HEX);
+      sysinfoJSON["Uptime"] = getSystemUptime();
+      sysinfoJSON["Network"] = WiFi.SSID();
+      sysinfoJSON["Signal Strength"] = String(WiFi.RSSI());
+      sysinfoJSON["IP Address"] = WiFi.localIP().toString();
+      sysinfoJSON["iGrill Device"] = iGrillBLEAddress;
+      sysinfoJSON["iGrill Firmware Version"] = fwVersion;
+      sysinfoJSON["iGrill Signal Strength"] = String(iGrillRSSI);
+      serializeJson(sysinfoJSON,payload);
+      String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/systeminfo";
+      mqtt_client->publish(topic.c_str(),payload.c_str());
+    }
+  }
+  else
+  {
+    connectMQTT();
+  }
+}
+
+//Publish iGrill Temp Probe Values to MQTT
+void publishProbeTemp(int probeNum, int temp)
+{
+  String payload ="";
+  DynamicJsonDocument tempJSON(1024);
+  tempJSON["temperature"] = String(temp);
+  serializeJson(tempJSON,payload);
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_"+ String(probeNum);
+      mqtt_client->publish(topic.c_str(),payload.c_str());
+    }
+  }
+  else
+  {
+    connectMQTT();
+  }
+}
+
+//Publish iGrill Battery Level to MQTT
+void publishBattery(int battPercent)
+{
+  String payload ="";
+  DynamicJsonDocument btyJSON(1024);
+  btyJSON["battery"] = String(battPercent);
+  serializeJson(btyJSON,payload);
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level";
+      mqtt_client->publish(topic.c_str(),payload.c_str());
+    }
+  }
+  else
+  {
+    connectMQTT();
+  }
+}
+
+//Publish MQTT Configuration Topics used by MQTT Auto Discovery
+void mqttAnnounce()
+{
+  String battPayload ="";
+  String p1Payload = "";
+  String p2Payload = "";
+  String p3Payload = "";
+  String p4Payload = "";
+
+  DynamicJsonDocument battJSON(1024);
+  battJSON["name"] = "Battery Level";
+  battJSON["device_class"] = "battery"; 
+  battJSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_batt";
+  battJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level";
+  battJSON["unit_of_measurement"] = "%";
+  serializeJson(battJSON,battPayload);
+
+  DynamicJsonDocument probe1JSON(1024);
+  probe1JSON["name"] = "Probe 1";
+  probe1JSON["device_class"] = "temperature"; 
+  probe1JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe1";
+  probe1JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_1";
+  probe1JSON["unit_of_measurement"] = "°F";
+  serializeJson(probe1JSON,p1Payload);
+
+  DynamicJsonDocument probe2JSON(1024);
+  probe2JSON["name"] = "Probe 2";
+  probe2JSON["device_class"] = "temperature"; 
+  probe2JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe2";
+  probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_2";
+  probe2JSON["unit_of_measurement"] = "°F";
+  serializeJson(probe2JSON,p2Payload);
+
+  DynamicJsonDocument probe3JSON(1024);
+  probe3JSON["name"] = "Probe 3";
+  probe3JSON["device_class"] = "temperature"; 
+  probe3JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe3";
+  probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_3";
+  probe3JSON["unit_of_measurement"] = "°F";
+  serializeJson(probe3JSON,p3Payload);
+
+  DynamicJsonDocument probe4JSON(1024);
+  probe4JSON["name"] = "Probe 4";
+  probe4JSON["device_class"] = "temperature"; 
+  probe4JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe4";
+  probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_4";
+  probe4JSON["unit_of_measurement"] = "°F";
+  serializeJson(probe4JSON,p4Payload);
+
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      String battConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level/config";
+      mqtt_client->publish(battConfigTopic.c_str(),battPayload.c_str());  //Add retain flag
+
+      String probe1ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_1/config";
+      mqtt_client->publish(probe1ConfigTopic.c_str(),p1Payload.c_str());  //Add retain flag
+      
+      String probe2ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_2/config";
+      mqtt_client->publish(probe2ConfigTopic.c_str(),p2Payload.c_str());  //Add retain flag
+      
+      String probe3ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_3/config";
+      mqtt_client->publish(probe3ConfigTopic.c_str(),p3Payload.c_str()); //Add retain flag
+      
+      String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_4/config";
+      mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str()); //Add retain flag
+      
+    }
+  }
+  else
+  {
+    connectMQTT();
+  }
+}
+
+#pragma endregion
+#pragma region ESP_Filesystem_Functions
 bool readConfigFile() 
 {
   File f = FileFS.open(CONFIG_FILE, "r");// this opens the config file in read-mode
@@ -946,6 +971,82 @@ bool writeConfigFile()
   return true;
 }
 
+bool loadConfigData()
+{
+  File file = FileFS.open(CONFIG_FILENAME, "r");
+  LOGERROR(F("LoadWiFiCfgFile "));
+  memset(&WM_config,       0, sizeof(WM_config));
+  memset(&WM_STA_IPconfig, 0, sizeof(WM_STA_IPconfig));
+  if (file)
+  {
+    file.readBytes((char *) &WM_config,   sizeof(WM_config));
+    file.readBytes((char *) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
+    file.close();
+    LOGERROR(F("OK"));
+    displayIPConfigStruct(WM_STA_IPconfig);
+    return true;
+  }
+  else
+  {
+    LOGERROR(F("failed"));
+    return false;
+  }
+}
+    
+void saveConfigData()
+{
+  File file = FileFS.open(CONFIG_FILENAME, "w");
+  LOGERROR(F("SaveWiFiCfgFile "));
+  if (file)
+  {
+    file.write((uint8_t*) &WM_config,   sizeof(WM_config));
+    file.write((uint8_t*) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
+    file.close();
+    LOGERROR(F("OK"));
+  }
+  else
+  {
+    LOGERROR(F("failed"));
+  }
+}
+
+#pragma endregion
+#pragma region ESP_Hardware_Related_Functions
+String getSystemUptime()
+{
+  long millisecs = millis();
+  int systemUpTimeMn = int((millisecs / (1000 * 60)) % 60);
+  int systemUpTimeHr = int((millisecs / (1000 * 60 * 60)) % 24);
+  int systemUpTimeDy = int((millisecs / (1000 * 60 * 60 * 24)) % 365);
+  return String(systemUpTimeDy)+"d:"+String(systemUpTimeHr)+"h:"+String(systemUpTimeMn)+"m";
+}
+
+//Toggle LED State
+void toggleLED()
+{
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+}
+
+//Event Handler Function for Button Click
+static void handleClick() 
+{
+  IGRILLLOGGER("Button clicked!", 0);
+  wifi_manager();
+}
+
+//Event Handler Function for Double Button Click
+static void handleDoubleClick() 
+{
+  IGRILLLOGGER("Button double clicked!", 0);
+}
+
+//Event Handler Function for Button Hold
+static void handleLongPressStop() 
+{
+  IGRILLLOGGER("Button pressed for long time and then released!", 0);
+  newConfigData();
+}
+
 // Display Saved Configuration Information (Trigger by pressing and holding the reset button for a few seconds)
 void newConfigData() 
 {
@@ -956,27 +1057,44 @@ void newConfigData()
   IGRILLLOGGER("custom_MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
 }
 
-void connectMQTT() 
+
+#pragma endregion
+
+void check_status()
 {
-  String lastWillTopic = (String)MQTT_BASETOPIC + "/igrill/mqttstatus";
-  IGRILLLOGGER("Connecting to MQTT...", 0);
-  if (!client)
-    client = new WiFiClient();
-  if(!mqtt_client)
+  static ulong checkstatus_timeout  = 0;
+  static ulong LEDstatus_timeout    = 0;
+  static ulong checkwifi_timeout    = 0;
+  static ulong igrillheartbeat_timeout = 0;
+  
+  ulong current_millis = millis();
+
+  // Check WiFi every WIFICHECK_INTERVAL (1) seconds.
+  if ((current_millis > checkwifi_timeout) || (checkwifi_timeout == 0))
   {
-    mqtt_client = new PubSubClient(*client);
-    mqtt_client->setBufferSize(512);
-    mqtt_client->setServer(custom_MQTT_SERVER, atoi(custom_MQTT_SERVERPORT));
+    check_WiFi();
+    checkwifi_timeout = current_millis + WIFICHECK_INTERVAL;
   }
 
-  if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD, lastWillTopic.c_str(), 1, true, "offline"))
+  if ((current_millis > LEDstatus_timeout) || (LEDstatus_timeout == 0))
   {
-    IGRILLLOGGER("MQTT connection failed: " + String(mqtt_client->state()), 0);
+    // Toggle LED at LED_INTERVAL = 2s
+    toggleLED();
+    LEDstatus_timeout = current_millis + LED_INTERVAL;
   }
-  else
-  {
-    IGRILLLOGGER("MQTT connected", 0);
-    mqtt_client->publish(lastWillTopic.c_str(),"online");
+
+  // Print hearbeat every HEARTBEAT_INTERVAL (10) seconds.
+  if ((current_millis > checkstatus_timeout) || (checkstatus_timeout == 0))
+  { 
+    heartBeatPrint();
+    checkstatus_timeout = current_millis + HEARTBEAT_INTERVAL;
+  }
+
+  // Print iGrill System Info every IGRILL_HEARTBEAT_INTERVAL (5) minutes.
+  if ((current_millis > igrillheartbeat_timeout) || (igrillheartbeat_timeout == 0))
+  { 
+    getiGrillInfo();
+    igrillheartbeat_timeout = current_millis + IGRILL_HEARTBEAT_INTERVAL;
   }
 }
 
