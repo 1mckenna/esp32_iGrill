@@ -168,6 +168,7 @@ static BLERemoteService* iGrillService = nullptr; //iGrill BLE Service used for 
 static BLERemoteService* iGrillBattService = nullptr; //iGrill BLE Service used to read battery level
 
 static BLEAdvertisedDevice* myDevice;
+static String deviceStr ="";
 #pragma endregion
 #pragma region iGrill_BLE_Functions
 //The registered iGrill Characteristics call this function when their values change
@@ -759,15 +760,22 @@ void connectMQTT()
   }
 }
 
+String getDeviceJSON()
+{
+  return deviceStr;
+}
+
 //Publish iGrill BLE Client and connected iGrill info to MQTT
 bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, int iGrillRSSI)
 {
+  deviceStr = "{'identifiers':'"+String(ESP_getChipId(), HEX)+"', 'connections': [['mac', '"+iGrillBLEAddress+"']], 'manufacturer': 'Weber', 'model': 'iGrill', 'name': 'igrill_"+ String(ESP_getChipId(), HEX)+"', 'sw_version': '"+fwVersion+"'}";
   if(mqtt_client)
   {
     if(mqtt_client->connected())
-    {
+    {      
       String payload="";
       DynamicJsonDocument sysinfoJSON(1024);
+      sysinfoJSON["device"] = deviceStr;
       sysinfoJSON["name"] = "igrill_"+String(ESP_getChipId(), HEX);
       sysinfoJSON["Uptime"] = getSystemUptime();
       sysinfoJSON["Network"] = WiFi.SSID();
@@ -779,6 +787,7 @@ bool publishSystemInfo(const char * fwVersion, const char * iGrillBLEAddress, in
       serializeJson(sysinfoJSON,payload);
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/systeminfo";
       mqtt_client->publish(topic.c_str(),payload.c_str());
+      mqttAnnounce();
     }
   }
   else
@@ -792,6 +801,7 @@ void publishProbeTemp(int probeNum, int temp)
 {
   String payload ="";
   DynamicJsonDocument tempJSON(1024);
+  tempJSON["device"] = getDeviceJSON();
   tempJSON["temperature"] = String(temp);
   serializeJson(tempJSON,payload);
   if(mqtt_client)
@@ -813,7 +823,8 @@ void publishBattery(int battPercent)
 {
   String payload ="";
   DynamicJsonDocument btyJSON(1024);
-  btyJSON["battery"] = String(battPercent);
+  btyJSON["device"] = getDeviceJSON();
+  btyJSON["battery_level"] = String(battPercent);
   serializeJson(btyJSON,payload);
   if(mqtt_client)
   {
@@ -839,6 +850,7 @@ void mqttAnnounce()
   String p4Payload = "";
 
   DynamicJsonDocument battJSON(1024);
+  battJSON["device"] = getDeviceJSON();
   battJSON["name"] = "Battery Level";
   battJSON["device_class"] = "battery"; 
   battJSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_batt";
@@ -847,6 +859,7 @@ void mqttAnnounce()
   serializeJson(battJSON,battPayload);
 
   DynamicJsonDocument probe1JSON(1024);
+  probe1JSON["device"] = getDeviceJSON();
   probe1JSON["name"] = "Probe 1";
   probe1JSON["device_class"] = "temperature"; 
   probe1JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe1";
@@ -855,6 +868,7 @@ void mqttAnnounce()
   serializeJson(probe1JSON,p1Payload);
 
   DynamicJsonDocument probe2JSON(1024);
+  probe2JSON["device"] = getDeviceJSON();
   probe2JSON["name"] = "Probe 2";
   probe2JSON["device_class"] = "temperature"; 
   probe2JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe2";
@@ -863,6 +877,7 @@ void mqttAnnounce()
   serializeJson(probe2JSON,p2Payload);
 
   DynamicJsonDocument probe3JSON(1024);
+  probe3JSON["device"] = getDeviceJSON();
   probe3JSON["name"] = "Probe 3";
   probe3JSON["device_class"] = "temperature"; 
   probe3JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe3";
@@ -871,6 +886,7 @@ void mqttAnnounce()
   serializeJson(probe3JSON,p3Payload);
 
   DynamicJsonDocument probe4JSON(1024);
+  probe4JSON["device"] = getDeviceJSON();
   probe4JSON["name"] = "Probe 4";
   probe4JSON["device_class"] = "temperature"; 
   probe4JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe4";
