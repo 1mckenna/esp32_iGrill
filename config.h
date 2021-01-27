@@ -53,6 +53,8 @@
 #define custom_MQTT_PASSWORD_LEN     40
 #define custom_MQTT_BASETOPIC_LEN    40
 
+
+
 // Number of Wifi Credentials to Store
 #define NUM_WIFI_CREDENTIALS      2
 #define  CONFIG_FILENAME          F("/wifi_cred.dat")
@@ -71,4 +73,5 @@
 #define WIFICHECK_INTERVAL           1000L
 #define LED_INTERVAL                 2000L
 #define HEARTBEAT_INTERVAL          10000L
-#define IGRILL_HEARTBEAT_INTERVAL  300000L
+//#define IGRILL_HEARTBEAT_INTERVAL  300000L
+#define IGRILL_HEARTBEAT_INTERVAL  60000L
