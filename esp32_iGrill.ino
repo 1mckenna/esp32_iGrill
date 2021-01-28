@@ -180,7 +180,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
       IGRILLLOGGER(" ! Probe 1 Disconnected!", 2);
-      publishProbeTemp(1,-1);
+      publishProbeTemp(1,-100);
     }
     else
     {
@@ -194,7 +194,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
       IGRILLLOGGER(" ! Probe 2 Disconnected!",2);
-      publishProbeTemp(2,-1);
+      publishProbeTemp(2,-100);
     }
     else
     {
@@ -208,7 +208,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
       IGRILLLOGGER(" ! Probe 3 Disconnected!",2);
-      publishProbeTemp(3,-1);
+      publishProbeTemp(3,-100);
     }
     else
     {
@@ -222,7 +222,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     if(pData[1] ==248) //This is the value set when probe is unplugged
     {
       IGRILLLOGGER(" ! Probe 4 Disconnected!",2);
-      publishProbeTemp(4,-1);
+      publishProbeTemp(4,-100);
     }
     else
     {
@@ -261,6 +261,7 @@ class MyClientCallback : public BLEClientCallbacks
     free(iGrillAuthService);
     free(iGrillService);
     free(iGrillBattService);
+    deviceStr =""; //Reset the Device String used for MQTT publishing
     IGRILLLOGGER(" - Done!", 1);
     reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
@@ -753,6 +754,7 @@ void connectMQTT()
     delete(client);
     mqtt_client=NULL;
     client=NULL;
+    delay(1*5000); //Delay for 5 seconds after a connection failure
   }
   else
   {
@@ -782,9 +784,6 @@ bool publishSystemInfo()
   {
     if(mqtt_client->connected())
     { 
-      //deviceObj["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
-      //deviceObj["payload_available"] = "online";
-      //deviceObj["payload_not_available"] = "offline";
       StaticJsonDocument<512> deviceObj;
       deserializeJson(deviceObj, deviceStr);
 
@@ -811,19 +810,11 @@ bool publishSystemInfo()
 //Publish iGrill Temp Probe Values to MQTT
 void publishProbeTemp(int probeNum, int temp)
 {
-  // StaticJsonDocument<512> deviceObj;
-  // deserializeJson(deviceObj, deviceStr);
-  // String payload ="";
-  // DynamicJsonDocument tempJSON(1024);
-  // tempJSON["device"] = deviceObj;
-  // tempJSON["temperature"] = String(temp);
-  // serializeJson(tempJSON,payload);
   if(mqtt_client)
   {
     if(mqtt_client->connected())
     {
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_"+ String(probeNum);
-      // mqtt_client->publish(topic.c_str(),payload.c_str());
       mqtt_client->publish(topic.c_str(),String(temp).c_str());
     }
   }
@@ -836,19 +827,11 @@ void publishProbeTemp(int probeNum, int temp)
 //Publish iGrill Battery Level to MQTT
 void publishBattery(int battPercent)
 {
-  // StaticJsonDocument<512> deviceObj;
-  // deserializeJson(deviceObj, deviceStr);
-  // String payload ="";
-  // DynamicJsonDocument btyJSON(1024);
-  // btyJSON["device"] = deviceObj;
-  // btyJSON["battery_level"] = String(battPercent);
-  // serializeJson(btyJSON,payload);
   if(mqtt_client)
   {
     if(mqtt_client->connected())
     {
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level";
-      // mqtt_client->publish(topic.c_str(),payload.c_str());
       mqtt_client->publish(topic.c_str(),String(battPercent).c_str());
     }
   }
@@ -877,6 +860,9 @@ void mqttAnnounce()
   battJSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_batt";
   battJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level";
   battJSON["unit_of_measurement"] = "%";
+  battJSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  battJSON["payload_available"] = "online";
+  battJSON["payload_not_available"] = "offline";
   serializeJson(battJSON,battPayload);
 
   DynamicJsonDocument probe1JSON(1024);
@@ -886,6 +872,11 @@ void mqttAnnounce()
   probe1JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe1";
   probe1JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_1";
   probe1JSON["unit_of_measurement"] = "°F";
+
+  probe1JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  probe1JSON["payload_available"] = "online";
+  probe1JSON["payload_not_available"] = "offline";
+
   serializeJson(probe1JSON,p1Payload);
 
   DynamicJsonDocument probe2JSON(1024);
@@ -895,6 +886,11 @@ void mqttAnnounce()
   probe2JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe2";
   probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_2";
   probe2JSON["unit_of_measurement"] = "°F";
+
+  probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  probe2JSON["payload_available"] = "online";
+  probe2JSON["payload_not_available"] = "offline";
+
   serializeJson(probe2JSON,p2Payload);
 
   DynamicJsonDocument probe3JSON(1024);
@@ -904,6 +900,11 @@ void mqttAnnounce()
   probe3JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe3";
   probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_3";
   probe3JSON["unit_of_measurement"] = "°F";
+
+  probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  probe3JSON["payload_available"] = "online";
+  probe3JSON["payload_not_available"] = "offline";
+
   serializeJson(probe3JSON,p3Payload);
 
   DynamicJsonDocument probe4JSON(1024);
@@ -913,6 +914,10 @@ void mqttAnnounce()
   probe4JSON["unique_id"]   = "igrill_"+String(ESP_getChipId(), HEX)+"_probe4";
   probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_4";
   probe4JSON["unit_of_measurement"] = "°F";
+  probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+  probe4JSON["payload_available"] = "online";
+  probe4JSON["payload_not_available"] = "offline";
+
   serializeJson(probe4JSON,p4Payload);
 
   if(mqtt_client)
@@ -921,19 +926,24 @@ void mqttAnnounce()
     {
       String battConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/battery_level/config";
       mqtt_client->publish(battConfigTopic.c_str(),battPayload.c_str());  //Add retain flag
-
+      delay(100);
       String probe1ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_1/config";
       mqtt_client->publish(probe1ConfigTopic.c_str(),p1Payload.c_str());  //Add retain flag
-      
+      delay(100);
       String probe2ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_2/config";
       mqtt_client->publish(probe2ConfigTopic.c_str(),p2Payload.c_str());  //Add retain flag
-      
+      delay(100);
       String probe3ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_3/config";
       mqtt_client->publish(probe3ConfigTopic.c_str(),p3Payload.c_str()); //Add retain flag
-      
+      delay(100);
       String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+"/probe_4/config";
       mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str()); //Add retain flag
-      
+      delay(100);
+      //We need to publish a status of online each time we reach here otherwise probes plugged in after the initial mqtt discovery
+      //will show as offline/unavailable until they see a new online announcement
+       String availTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
+       mqtt_client->publish(availTopic.c_str(),"online");
+       delay(100);
     }
   }
   else
