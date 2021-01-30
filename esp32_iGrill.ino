@@ -624,6 +624,10 @@ void check_WiFi()
   if ( (WiFi.status() != WL_CONNECTED) )
   {
     IGRILLLOGGER("WiFi lost. Call connectMultiWiFi in loop",0);
+    if(iGrillClient)
+    {
+      iGrillClient->disconnect();
+    }
     disconnectMQTT();
     connectMultiWiFi();
   }
@@ -855,10 +859,6 @@ void publishProbeTemp(int probeNum, int temp)
         mqtt_client->publish(topic.c_str(),String(temp).c_str());
     }
   }
-  else
-  {
-    connectMQTT();
-  }
 }
 
 //Publish iGrill Battery Level to MQTT
@@ -871,10 +871,6 @@ void publishBattery(int battPercent)
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/battery_level";
       mqtt_client->publish(topic.c_str(),String(battPercent).c_str());
     }
-  }
-  else
-  {
-    connectMQTT();
   }
 }
 
