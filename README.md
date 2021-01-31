@@ -83,10 +83,19 @@ When the device is in configuarion mode it will start a wireless access point na
 Add images of example initial configuration
 
 # Home Assistant Information
-Add Home Assistant Configuration info here
+After you have configured the esp32_iGrill Client and have it connected to the same MQTT Broker as your Home Assistant instance the device should automatically appear.
+## Device View
+![igrill_ha_device](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/igrill_ha_device.png?raw=true)
+## Detailed View
+![igrill_ha_device_details](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/igrill_ha_device_details.png?raw=true)
+## Other Notes
+  * You can replace the ESP32 used to talk to the iGrill without needing to make any changes on the Home Assistant side. This is why we use the iGrill MAC in the MQTT topics instead of relying on the ESP32 Device MAC.
+  * The Battery Level shown for the device in Home Assistant
+    * The value is the last known battery_level recieved via MQTT
+    * Will have its value persist throughout restarts of Home Assistant as it and the configuration topics have the retain flag set
 
-
-# MQTT Topics Published
+# MQTT Information
+## MQTT Topics Published
 | **MQTT Topic** | **Value(s)** |
 | :--------------------: | :--------------------: |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/status | online: MQTT Connected</br>offline: MQTT Disconnected |
@@ -103,6 +112,16 @@ br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Stre
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4/config | MQTT Autoconfiguration Settings for Probe 4 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level/config | MQTT Autoconfiguration Settings for Battery Level |
 
+## MQTT Retained Topics
+We only set the retain flag on the following topics
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level  <b><i>(We set the retain flag on this so we know the level of the iGrill battery the last time the device was seen)</b></i>
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level/config
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1/config
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2/config
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3/config
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4/config
+
+
 # Troubleshooting
 ## Common Issues
   * The device is in Configuration Mode after flashing
@@ -110,6 +129,7 @@ br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Stre
     * This can happen due to the reset of the board after flashing getting detected as a second press of the reset button. Just press the reset button on hte board once to reboot the device out of configuration mode.
   * I cannot connect to the iGrill Device
     * iGrill Devices can only be connected to a single device at a time. For best results unpair the iGrill from all phones/tablets that it has been conncetd to in the past.
+
 ## Change Serial Logging Level
 If you are running into an issue and want to increase the verbosity of the logging that can be done via the following two settings in <b>config.h</b>
   * `_WIFIMGR_LOGLEVEL_` <i>(Default: 1)</i>
