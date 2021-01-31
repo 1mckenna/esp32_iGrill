@@ -3,8 +3,128 @@ ESP32 BLE Client for the Weber iGrill 2 Device
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
-# Status
-## Complete
+# Arduino IDE Setup
+## Install ESP32 Board Support with latest BLE Libs
+1. Open Arduino IDE
+2. Click <b>File &#8594; Preferences</b>
+3. Add `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json` to the Additional Board Manager URLs.
+![add_esp32_board_url](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/add_esp32_board_url.png?raw=true)
+4. Click <b>OK</b>
+5. From the toolbar select <b>Tools &#8594; Board "<i>Currently_Selected_Board</i>" &#8594; Boards Manager...</b>
+![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_boardmanager.png?raw=true)
+6. In the Boards Manager Dialog Window Search for <b>esp32</b>
+7. After a few seconds you should see esp32 by Espressif Systems
+8. Select the version you want to install (tested with 1.0.5-rc6)
+9. Click Install
+![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_boardmanager.png?raw=true)
+
+## Select the ESP32 Board
+1. Click <b>Tools &#8594; Board &#8594; ESP32 Arduino &#8594; ESP32 Dev Module</b>
+![select_esp32_board](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/select_esp32_board.png?raw=true)
+
+## Select the Correct Partition Scheme
+We need to change from the default parition scheme, becuase we utilize both Wifi Manager and Bluetooth libraries. The combination of both are too large for the default partition scheme.
+1. Click <b>Tools &#8594; Partition Scheme &#8594; Huge APP (3MB No OTA/SPIFFS)</b>
+![select_esp32_partition](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/select_esp32_partition.png?raw=true)
+## Install Required Libraries
+1. Open the Libray Manager
+2. Click <b>Tools &#8594; Manage Libraries...</b>
+![open_libmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_libmanager.png?raw=true)
+3. Search for and install the following libraries
+    * ArdunioJson
+    ![arduniojson](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_arduinojson.png?raw=true)
+    * PubSubClient
+    ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_pubsubclient.png?raw=true)
+    * ESP_WifiManager
+    ![esp_wifimanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_esp_wifimgr.png?raw=true)
+    * ESP_DoubleResetDetector (you will be prompted to install automatically)
+    * LittleFS_esp32 (you will be prompted to install automatically)
+    ![esp_wifimanager_deps](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_esp_wifimgr_deps.png?raw=true)
+
+# Clone and Flash
+If you have not yet completed the Arduino IDE setup steps or have chosen to skip these steps, ensure you have the correct partition size selected and all the libraries necessary already installed.
+## Clone the Repo
+1. Open the termnial and cd to your Arduino project folder
+    * `cd ~/Ardunio`
+2. Clone this repo
+    * `git clone https://github.com/1mckenna/esp32_iGrill.git`
+
+## Open and Flash the Project
+1. Open the Ardunio IDE
+2. Open the esp32_iGrill Sketch
+
+    ![open_sketch](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_sketch.png?raw=true)
+3. Verify and Upload
+
+# Initial Configuration
+After flashing the ESP Device the first time the device will automatically enter configuration mode.
+
+When the device is in configuarion mode it will start a wireless access point named, <b>iGrillClient_<i>esp32ChipID</i></b> and the Blue LED will stay solid blue.
+
+## Configuration Portal Connection Information
+| **Wifi SSID Name** | **Wifi Password**
+| :--------------------: | :--------------------: |
+|  iGrillClient_<i>esp32ChipID</i> | igrill_client |
+</br>
+
+## Default Configuration Portal Settings
+| **Setting** | **Default Value** | **Comment** |
+| :--------------------: | :--------------------: | :--------------------: |
+| SSID Name | blank | Primary Wifi Network Name <b>(required)</b> |
+| SSID Password | blank | Primary Wifi Network Password <b>(required)</b>|
+| SSID1 Name | blank | Secondary Wifi Network Name </br><i>If you only want to connect the device to a single network you can leave this blank</i>| |
+| SSID1 Password | blank | Secondary Wifi Network Password </br><i>If you only want to connect the device to a single network you can leave this blank</i>|
+| MQTT_SERVER | 127.0.0.1 | Change to your MQTT Broker IP |
+| MQTT_SERVERPORT | 1883 | Change to your MQTT Broker Port|
+| MQTT_USERNAME | mqtt | Change to your MQTT Username|
+| MQTT_PASSWORD | password | Change to your MQTT User Password |
+| MQTT_BASETOPIC | igrill | Change to your desired base MQTT Topic</br>If you are using Home Assistant and want to take advantage of MQTT Autodiscovery you need to set this to your mqtt autodiscoervy prefix. </br><i>(Home Assistant Default: <b>homeassistant</b>)</i>
+</br>
+Add images of example initial configuration
+
+# Home Assistant Information
+Add Home Assistant Configuration info here
+
+
+# MQTT Topics Published
+| **MQTT Topic** | **Value(s)** |
+| :--------------------: | :--------------------: |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/status | online: MQTT Connected</br>offline: MQTT Disconnected |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/systeminfo | System Information about iGrill BLE Client Device</
+br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Strength, IP Address)</i>|
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1 | Temperature Value of Probe 1 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2 | Temperature Value of Probe 2 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3 | Temperature Value of Probe 3 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4 | Temperature Value of Probe 4 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level | Battery Level of the iGrill Device |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1/config | MQTT Autoconfiguration Settings for Probe 1 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2/config | MQTT Autoconfiguration Settings for Probe 2 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3/config | MQTT Autoconfiguration Settings for Probe 3 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4/config | MQTT Autoconfiguration Settings for Probe 4 |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level/config | MQTT Autoconfiguration Settings for Battery Level |
+
+# Troubleshooting
+## Common Issues
+  * The device is in Configuration Mode after flashing
+    * Don't Worry you havent lost your configuration
+    * This can happen due to the reset of the board after flashing getting detected as a second press of the reset button. Just press the reset button on hte board once to reboot the device out of configuration mode.
+  * I cannot connect to the iGrill Device
+    * iGrill Devices can only be connected to a single device at a time. For best results unpair the iGrill from all phones/tablets that it has been conncetd to in the past.
+## Change Serial Logging Level
+If you are running into an issue and want to increase the verbosity of the logging that can be done via the following two settings in <b>config.h</b>
+  * `_WIFIMGR_LOGLEVEL_` <i>(Default: 1)</i>
+    * Use from 0 to 4. Higher number, more debugging messages and memory usage.
+  * `IGRILL_DEBUG_LVL` <i>(Default: 0)</i>
+    * Level 0: Print only Basic Info (Default)
+    * Level 1: Level 0 + Print BLE Connection Info
+    * Level 2: Level 1 + Print everything including temp/batt callbacks (Only Recommended for troubleshooting BLE issues)
+
+# iGrill Client Development Status
+## In Progress
+* Add support for iGrillv3
+* Add support for iGrill Mini
+
+## Completed
 * Discover iGrill Devices
 * Connect and Authenticate to the iGrill Device
 * Read iGrill Device Firmware Version
@@ -12,48 +132,8 @@ This will connect to an iGrill deivce and then publish the temperatures of the p
 * Read Temperature Probes
 * Detect Temperature Probe Disconnection
 * Reconnect on Device Disconnection
-## In Progress
-* Verify iGrill Mini compatibility
 * LED Status on ESP
 * Wifi
 * MQTT Connection
+* MQTT Auto Discovery
 * Web Setup Interface for Wifi/MQTT
-
-# Sample Run
-```
-rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
-configsip: 0, SPIWP:0xee
-clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
-mode:DIO, clock div:1
-load:0x3fff0018,len:4
-load:0x3fff001c,len:1044
-load:0x40078000,len:10124
-load:0x40080400,len:5856
-entry 0x400806a8
-Starting iGrill BLE Client...
-iGrill Device Discovered (d4:81:ca:22:33:48 -75 db)
-Connecting to iGrill (d4:81:ca:22:33:48)
- - Created client
- - Connected to iGrill BLE Server
- - iGrill Pair Status: Paired
- - Performing iGrill App Authentication
- - Writing iGrill App Challenge...
- - Reading iGrill Device Challenge
- - Writing Encrypted iGrill Device Challenge...
- - Authentication Complete
- - iGrill Firmware Version: 1.5
- - Setting up Battery Characteristic...
- - Setting up Probes...
-  -- Probe 1 Setup!
-  -- Probe 2 Setup!
-  -- Probe 3 Setup!
-  -- Probe 4 Setup!
- * Probe 1 Temp: 69
- * Probe 1 Temp: 68
- * Probe 1 Temp: 69
- % Battery Level: 53%
-```
-
-# Arduino Setup Notes
-1. Add https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json to the Additional Board Manager URLs.
-2. In Boards Manager install esp32 version 1.0.5-rc6 (others may work, but I have only tested against this version)
