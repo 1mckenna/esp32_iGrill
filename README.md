@@ -54,7 +54,12 @@ If you have not yet completed the Arduino IDE setup steps or have chosen to skip
 2. Open the esp32_iGrill Sketch
 
     ![open_sketch](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_sketch.png?raw=true)
-3. Verify and Upload
+3. Verify
+
+    ![arduino_verify](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_verify.png?raw=true)
+4. Upload
+  
+    ![arduino_upload](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_upload.png?raw=true)
 
 # Initial Configuration
 After flashing the ESP Device the first time the device will automatically enter configuration mode.
@@ -78,9 +83,32 @@ When the device is in configuarion mode it will start a wireless access point na
 | MQTT_SERVERPORT | 1883 | Change to your MQTT Broker Port|
 | MQTT_USERNAME | mqtt | Change to your MQTT Username|
 | MQTT_PASSWORD | password | Change to your MQTT User Password |
-| MQTT_BASETOPIC | igrill | Change to your desired base MQTT Topic</br>If you are using Home Assistant and want to take advantage of MQTT Autodiscovery you need to set this to your mqtt autodiscoervy prefix. </br><i>(Home Assistant Default: <b>homeassistant</b>)</i>
-</br>
-Add images of example initial configuration
+| MQTT_BASETOPIC | igrill | Change to your desired base MQTT Topic</br>If you are using Home Assistant and want to take advantage of MQTT Autodiscovery you need to set this to your mqtt autodiscoervy prefix. </br><i>(Home Assistant Default: <b>homeassistant</b>)</i>|
+
+## Initial Configuration Walkthrough
+1. Put the device in configuration mode (Press the reset button 2x in quick succession). The blue LED will stay solid once configururation mode has been entered.
+2. Scan for the new iGrillClient Configuration Wireless network
+
+    ![wm_connect_1](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_1.png?raw=true)
+3.  Connect to the device using the password <b>igrill_client</b>
+
+    ![wm_connect_pw](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_pw.png?raw=true)
+4. Once you have connected you will be brought to the Main configuration page. 
+   * If you have connected to a network previously you will see similar information as shown in the yellow boxes.
+   * Select Configuration to be taken to the device configuration page.
+    ![wm_config_main](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_config_main.png?raw=true)
+5. You should now be at the main configuration page.
+   * Discovered networks will show up in the area noted by the green box.
+   * By selecting a discovered network it will autopopulate that name into the SSID field.
+   * If you only have one network you can leave SSID1 and its corresponding password field blank
+   * Populate the missing MQTT Information
+    ![wm_wifi_mqtt](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_mqtt.png?raw=true)    
+6. Configure IP Settings
+   * <b>Leave the current values shown alone if you wish to use DHCP.</b>
+   * If you wish to use a static IP Address <b>instead of</b> DHCP please complete the Static IP, Gateway IP and Subnet fields prior to pressing Save
+    ![wm_wifi_ip](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_ip.png?raw=true)
+
+
 
 # Home Assistant Information
 After you have configured the esp32_iGrill Client and have it connected to the same MQTT Broker as your Home Assistant instance the device should automatically appear.
