@@ -3,6 +3,35 @@ ESP32 BLE Client for the Weber iGrill 2 Device
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
+# Table of Contents
+- [ESP32_iGrill](#esp32-igrill)
+- [Arduino IDE Setup](#arduino-ide-setup)
+  * [Install ESP32 Board Support with latest BLE Libs](#install-esp32-board-support-with-latest-ble-libs)
+  * [Select the ESP32 Board](#select-the-esp32-board)
+  * [Select the Correct Partition Scheme](#select-the-correct-partition-scheme)
+  * [Install Required Libraries](#install-required-libraries)
+- [Clone and Flash](#clone-and-flash)
+  * [Clone the Repo](#clone-the-repo)
+  * [Open and Flash the Project](#open-and-flash-the-project)
+- [Initial Configuration](#initial-configuration)
+  * [Configuration Portal Connection Information](#configuration-portal-connection-information)
+  * [Default Configuration Portal Settings](#default-configuration-portal-settings)
+  * [Initial Configuration Walkthrough](#initial-configuration-walkthrough)
+- [Home Assistant Information](#home-assistant-information)
+  * [Device View](#device-view)
+  * [Detailed View](#detailed-view)
+  * [Other Notes](#other-notes)
+- [MQTT Information](#mqtt-information)
+  * [MQTT Topics Published](#mqtt-topics-published)
+  * [MQTT Retained Topics](#mqtt-retained-topics)
+- [Troubleshooting](#troubleshooting)
+  * [Common Issues](#common-issues)
+  * [Change Serial Logging Level](#change-serial-logging-level)
+- [iGrill Client Development Status](#igrill-client-development-status)
+  * [In Progress](#in-progress)
+  * [Completed](#completed)
+
+
 # Arduino IDE Setup
 ## Install ESP32 Board Support with latest BLE Libs
 1. Open Arduino IDE
