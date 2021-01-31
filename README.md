@@ -51,14 +51,11 @@ If you have not yet completed the Arduino IDE setup steps or have chosen to skip
 
 ## Open and Flash the Project
 1. Open the Ardunio IDE
-2. Open the esp32_iGrill Sketch
-
+2. Open the esp32_iGrill Sketch</br>
     ![open_sketch](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_sketch.png?raw=true)
-3. Verify
-
+3. Verify</br>
     ![arduino_verify](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_verify.png?raw=true)
-4. Upload
-  
+4. Upload</br>  
     ![arduino_upload](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_upload.png?raw=true)
 
 # Initial Configuration
@@ -87,25 +84,23 @@ When the device is in configuarion mode it will start a wireless access point na
 
 ## Initial Configuration Walkthrough
 1. Put the device in configuration mode (Press the reset button 2x in quick succession). The blue LED will stay solid once configururation mode has been entered.
-2. Scan for the new iGrillClient Configuration Wireless network
-
+2. Scan for the new iGrillClient Configuration Wireless network</br>
     ![wm_connect_1](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_1.png?raw=true)
-3.  Connect to the device using the password <b>igrill_client</b>
-
+3.  Connect to the device using the password <b>igrill_client</b></br>
     ![wm_connect_pw](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_pw.png?raw=true)
 4. Once you have connected you will be brought to the Main configuration page. 
    * If you have connected to a network previously you will see similar information as shown in the yellow boxes.
-   * Select Configuration to be taken to the device configuration page.
+   * Select Configuration to be taken to the device configuration page.</br>
     ![wm_config_main](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_config_main.png?raw=true)
 5. You should now be at the main configuration page.
    * Discovered networks will show up in the area noted by the green box.
    * By selecting a discovered network it will autopopulate that name into the SSID field.
    * If you only have one network you can leave SSID1 and its corresponding password field blank
-   * Populate the missing MQTT Information
+   * Populate the missing MQTT Information</br>
     ![wm_wifi_mqtt](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_mqtt.png?raw=true)    
 6. Configure IP Settings
    * <b>Leave the current values shown alone if you wish to use DHCP.</b>
-   * If you wish to use a static IP Address <b>instead of</b> DHCP please complete the Static IP, Gateway IP and Subnet fields prior to pressing Save
+   * If you wish to use a static IP Address <b>instead of</b> DHCP please complete the Static IP, Gateway IP and Subnet fields prior to pressing Save</br>
     ![wm_wifi_ip](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_ip.png?raw=true)
 
 
