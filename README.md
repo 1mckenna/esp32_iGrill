@@ -3,21 +3,8 @@ ESP32 BLE Client for the Weber iGrill 2 Device
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
-# Status
-## Complete
-* Discover iGrill Devices
-* Connect and Authenticate to the iGrill Device
-* Read iGrill Device Firmware Version
-* Read Battery Level
-* Read Temperature Probes
-* Detect Temperature Probe Disconnection
-* Reconnect on Device Disconnection
-## In Progress
-* Verify iGrill Mini compatibility
-* LED Status on ESP
-* Wifi
-* MQTT Connection
-* Web Setup Interface for Wifi/MQTT
+# Notice
+This branch should only be used for testing and adding changes to the the iGrill BLE related portions of this code. 
 
 # Sample Run
 ```
@@ -53,7 +40,3 @@ Connecting to iGrill (d4:81:ca:22:33:48)
  * Probe 1 Temp: 69
  % Battery Level: 53%
 ```
-
-# Arduino Setup Notes
-1. Add https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json to the Additional Board Manager URLs.
-2. In Boards Manager install esp32 version 1.0.5-rc6 (others may work, but I have only tested against this version)
