@@ -30,45 +30,45 @@ This will connect to an iGrill deivce and then publish the temperatures of the p
 - [iGrill Client Development Status](#igrill-client-development-status)
   * [In Progress](#in-progress)
   * [Completed](#completed)
-
+- [Contributions](#Contributions)
 
 # Arduino IDE Setup
 ## Install ESP32 Board Support with latest BLE Libs
 1. Open Arduino IDE
 2. Click <b>File &#8594; Preferences</b>
 3. Add `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json` to the Additional Board Manager URLs.
-![add_esp32_board_url](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/add_esp32_board_url.png?raw=true)
+![add_esp32_board_url](https://github.com/1mckenna/esp32_iGrill/blob/main/images/add_esp32_board_url.png?raw=true)
 4. Click <b>OK</b>
 5. From the toolbar select <b>Tools &#8594; Board "<i>Currently_Selected_Board</i>" &#8594; Boards Manager...</b>
-![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_boardmanager.png?raw=true)
+![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_boardmanager.png?raw=true)
 6. In the Boards Manager Dialog Window Search for <b>esp32</b>
 7. After a few seconds you should see esp32 by Espressif Systems
 8. Select the version you want to install (tested with 1.0.5-rc6)
 9. Click Install
-![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_boardmanager.png?raw=true)
+![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_boardmanager.png?raw=true)
 
 ## Select the ESP32 Board
 1. Click <b>Tools &#8594; Board &#8594; ESP32 Arduino &#8594; ESP32 Dev Module</b>
-![select_esp32_board](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/select_esp32_board.png?raw=true)
+![select_esp32_board](https://github.com/1mckenna/esp32_iGrill/blob/main/images/select_esp32_board.png?raw=true)
 
 ## Select the Correct Partition Scheme
 We need to change from the default parition scheme, becuase we utilize both Wifi Manager and Bluetooth libraries. The combination of both are too large for the default partition scheme.
 1. Click <b>Tools &#8594; Partition Scheme &#8594; Huge APP (3MB No OTA/SPIFFS)</b>
-![select_esp32_partition](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/select_esp32_partition.png?raw=true)
+![select_esp32_partition](https://github.com/1mckenna/esp32_iGrill/blob/main/images/select_esp32_partition.png?raw=true)
 ## Install Required Libraries
 1. Open the Libray Manager
 2. Click <b>Tools &#8594; Manage Libraries...</b>
-![open_libmanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_libmanager.png?raw=true)
+![open_libmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_libmanager.png?raw=true)
 3. Search for and install the following libraries
     * ArdunioJson
-    ![arduniojson](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_arduinojson.png?raw=true)
+    ![arduniojson](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_arduinojson.png?raw=true)
     * PubSubClient
-    ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_pubsubclient.png?raw=true)
+    ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_pubsubclient.png?raw=true)
     * ESP_WifiManager
-    ![esp_wifimanager](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_esp_wifimgr.png?raw=true)
+    ![esp_wifimanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr.png?raw=true)
     * ESP_DoubleResetDetector (you will be prompted to install automatically)
     * LittleFS_esp32 (you will be prompted to install automatically)
-    ![esp_wifimanager_deps](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/install_esp_wifimgr_deps.png?raw=true)
+    ![esp_wifimanager_deps](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr_deps.png?raw=true)
 
 # Clone and Flash
 If you have not yet completed the Arduino IDE setup steps or have chosen to skip these steps, ensure you have the correct partition size selected and all the libraries necessary already installed.
@@ -81,11 +81,11 @@ If you have not yet completed the Arduino IDE setup steps or have chosen to skip
 ## Open and Flash the Project
 1. Open the Ardunio IDE
 2. Open the esp32_iGrill Sketch</br>
-    ![open_sketch](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/open_sketch.png?raw=true)
+    ![open_sketch](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_sketch.png?raw=true)
 3. Verify</br>
-    ![arduino_verify](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_verify.png?raw=true)
+    ![arduino_verify](https://github.com/1mckenna/esp32_iGrill/blob/main/images/arduino_verify.png?raw=true)
 4. Upload</br>  
-    ![arduino_upload](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/arduino_upload.png?raw=true)
+    ![arduino_upload](https://github.com/1mckenna/esp32_iGrill/blob/main/images/arduino_upload.png?raw=true)
 
 # Initial Configuration
 After flashing the ESP Device the first time the device will automatically enter configuration mode.
@@ -114,32 +114,32 @@ When the device is in configuarion mode it will start a wireless access point na
 ## Initial Configuration Walkthrough
 1. Put the device in configuration mode (Press the reset button 2x in quick succession). The blue LED will stay solid once configururation mode has been entered.
 2. Scan for the new iGrillClient Configuration Wireless network</br>
-    ![wm_connect_1](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_1.png?raw=true)
+    ![wm_connect_1](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_connect_1.png?raw=true)
 3.  Connect to the device using the password <b>igrill_client</b></br>
-    ![wm_connect_pw](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_connect_pw.png?raw=true)
+    ![wm_connect_pw](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_connect_pw.png?raw=true)
 4. Once you have connected you will be brought to the Main configuration page. 
    * If you have connected to a network previously you will see similar information as shown in the yellow boxes.
    * Select Configuration to be taken to the device configuration page.</br>
-    ![wm_config_main](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_config_main.png?raw=true)
+    ![wm_config_main](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_config_main.png?raw=true)
 5. You should now be at the main configuration page.
    * Discovered networks will show up in the area noted by the green box.
    * By selecting a discovered network it will autopopulate that name into the SSID field.
    * If you only have one network you can leave SSID1 and its corresponding password field blank
    * Populate the missing MQTT Information</br>
-    ![wm_wifi_mqtt](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_mqtt.png?raw=true)    
+    ![wm_wifi_mqtt](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_wifi_mqtt.png?raw=true)    
 6. Configure IP Settings
    * <b>Leave the current values shown alone if you wish to use DHCP.</b>
    * If you wish to use a static IP Address <b>instead of</b> DHCP please complete the Static IP, Gateway IP and Subnet fields prior to pressing Save</br>
-    ![wm_wifi_ip](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/wm_wifi_ip.png?raw=true)
+    ![wm_wifi_ip](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_wifi_ip.png?raw=true)
 
 
 
 # Home Assistant Information
 After you have configured the esp32_iGrill Client and have it connected to the same MQTT Broker as your Home Assistant instance the device should automatically appear.
 ## Device View
-![igrill_ha_device](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/igrill_ha_device.png?raw=true)
+![igrill_ha_device](https://github.com/1mckenna/esp32_iGrill/blob/main/images/igrill_ha_device.png?raw=true)
 ## Detailed View
-![igrill_ha_device_details](https://github.com/1mckenna/esp32_iGrill/blob/wifi/images/igrill_ha_device_details.png?raw=true)
+![igrill_ha_device_details](https://github.com/1mckenna/esp32_iGrill/blob/main/images/igrill_ha_device_details.png?raw=true)
 ## Other Notes
   * You can replace the ESP32 used to talk to the iGrill without needing to make any changes on the Home Assistant side. This is why we use the iGrill MAC in the MQTT topics instead of relying on the ESP32 Device MAC.
   * The Battery Level shown for the device in Home Assistant
@@ -209,3 +209,6 @@ If you are running into an issue and want to increase the verbosity of the loggi
 * MQTT Connection
 * MQTT Auto Discovery
 * Web Setup Interface for Wifi/MQTT
+
+# Contributions
+ * [beed2112](https://github.com/beed2112) &#8594;  MQTT Design / Massive Amounts of Testing
