@@ -151,8 +151,7 @@ After you have configured the esp32_iGrill Client and have it connected to the s
 | **MQTT Topic** | **Value(s)** |
 | :--------------------: | :--------------------: |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/status | online: MQTT Connected</br>offline: MQTT Disconnected |
-|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/systeminfo | System Information about iGrill BLE Client Device</
-br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Strength, IP Address)</i>|
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/systeminfo | System Information about iGrill BLE Client Device</br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Strength, IP Address)</i>|
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1 | Temperature Value of Probe 1 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2 | Temperature Value of Probe 2 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3 | Temperature Value of Probe 3 |
