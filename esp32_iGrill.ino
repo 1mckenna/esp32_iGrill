@@ -142,6 +142,7 @@ static BLEUUID DEVICE_CHALLENGE("64ac0003-4a4b-4b58-9f37-94d3c52ffdf7"); //iGril
 static BLEUUID DEVICE_RESPONSE("64ac0004-4a4b-4b58-9f37-94d3c52ffdf7"); //iGrill BLE Characteristic used for Authentication
 
 static BLEUUID SERVICE_UUID("A5C50000-F186-4BD6-97F2-7EBACBA0D708"); //iGrillv2 Service
+static BLEUUID V3_SERVICE_UUID("6E910000-58DC-41C7-943F-518B278CEA88"); //iGrillv3 Service
 static BLEUUID PROBE1_TEMPERATURE("06EF0002-2E06-4B79-9E33-FCE2C42805EC"); //iGrill BLE Characteristic for Probe1 Temperature
 static BLEUUID PROBE1_THRESHOLD("06ef0003-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe1 Notification Threshhold (NOT IMPLEMENTED)
 static BLEUUID PROBE2_TEMPERATURE("06ef0004-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe2 Temperature
@@ -465,7 +466,14 @@ bool connectToServer()
         iGrillAuthService->getCharacteristic(DEVICE_RESPONSE)->writeValue(encrypted_device_challenge, true);
         //End of Authentication Sequence
         IGRILLLOGGER(" - Authentication Complete",1);
-        iGrillService = iGrillClient->getService(SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
+        if(iGrillModel == "iGrillv2")
+        {
+          iGrillService = iGrillClient->getService(SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
+        }
+        else if(iGrillModel == "iGrillv3")
+        {
+          iGrillService = iGrillClient->getService(V3_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
+        }
         delay(1*1000);
         iGrillBattService = iGrillClient->getService(BATTERY_SERVICE_UUID); //Obtain a reference for the iGrill Battery Service that we use for Getting the Battery Level
         delay(1*1000);
@@ -502,13 +510,13 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
       iGrillModel = "iGrillv2";
       doConnect = true;
     }
-    //else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(SERVICE_UUID)) 
-    //{
-      //BLEDevice::getScan()->stop();
-      //myDevice = new BLEAdvertisedDevice(advertisedDevice);
-      //iGrillModel = "iGrillv3"
-      //doConnect = true;
-    //}
+    else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(V3_SERVICE_UUID)) 
+    {
+      BLEDevice::getScan()->stop();
+      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+      iGrillModel = "iGrillv3";
+      doConnect = true;
+    }
   }
 };
 #pragma endregion

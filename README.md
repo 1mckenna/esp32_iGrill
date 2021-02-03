@@ -1,5 +1,5 @@
 # ESP32_iGrill
-ESP32 BLE Client for the Weber iGrill 2 Device
+ESP32 BLE Client for the Weber iGrillv2 and v3 Devices
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
@@ -185,18 +185,18 @@ We only set the retain flag on the following topics
 If you are running into an issue and want to increase the verbosity of the logging that can be done via the following two settings in <b>config.h</b>
   * `_WIFIMGR_LOGLEVEL_` <i>(Default: 1)</i>
     * Use from 0 to 4. Higher number, more debugging messages and memory usage.
-  * `IGRILL_DEBUG_LVL` <i>(Default: 0)</i>
-    * Level 0: Print only Basic Info (Default)
-    * Level 1: Level 0 + Print BLE Connection Info
+  * `IGRILL_DEBUG_LVL` <i>(Default: 1)</i>
+    * Level 0: Print only Basic Info
+    * Level 1: Level 0 + Print BLE Connection Info (Default)
     * Level 2: Level 1 + Print everything including temp/batt callbacks (Only Recommended for troubleshooting BLE issues)
 
 # iGrill Client Development Status
 ## In Progress
-* Add support for iGrillv3
-* Add support for iGrill Mini
+* Add support for iGrill Mini (Need a tester)
 
 ## Completed
-* Discover iGrill Devices
+* AutoDiscover iGrill Devices
+* Support for iGrillv3
 * Connect and Authenticate to the iGrill Device
 * Read iGrill Device Firmware Version
 * Read Battery Level
@@ -210,4 +210,4 @@ If you are running into an issue and want to increase the verbosity of the loggi
 * Web Setup Interface for Wifi/MQTT
 
 # Contributions
- * [beed2112](https://github.com/beed2112) &#8594;  MQTT Design / Massive Amounts of Testing
+ * [beed2112](https://github.com/beed2112) &#8594;  MQTT Design Consult / Massive Amounts of Testing
