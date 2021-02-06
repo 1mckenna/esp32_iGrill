@@ -125,7 +125,8 @@ When the device is in configuarion mode it will start a wireless access point na
    * Discovered networks will show up in the area noted by the green box.
    * By selecting a discovered network it will autopopulate that name into the SSID field.
    * If you only have one network you can leave SSID1 and its corresponding password field blank
-   * Populate the missing MQTT Information</br>
+   * Populate the missing MQTT Information
+   * Choose Imperial or Metric Units for Degrees (make sure to match the setting on your iGrill device)</br>
     ![wm_wifi_mqtt](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_wifi_mqtt.png?raw=true)    
 6. Configure IP Settings
    * <b>Leave the current values shown alone if you wish to use DHCP.</b>
@@ -180,6 +181,8 @@ We only set the retain flag on the following topics
     * This can happen due to the reset of the board after flashing getting detected as a second press of the reset button. Just press the reset button on hte board once to reboot the device out of configuration mode.
   * I cannot connect to the iGrill Device
     * iGrill Devices can only be connected to a single device at a time. For best results unpair the iGrill from all phones/tablets that it has been conncetd to in the past.
+  * Home Assistant is not showing the correct temperatures but the temperature shown on the device is correct.
+    * Make sure the Use Metric Degrees setting in the configuration portal matches the setting on your iGrill device.
 
 ## Change Serial Logging Level
 If you are running into an issue and want to increase the verbosity of the logging that can be done via the following two settings in <b>config.h</b>

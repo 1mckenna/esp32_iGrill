@@ -53,6 +53,9 @@ char custom_MQTT_SERVERPORT[custom_MQTT_PORT_LEN];
 char custom_MQTT_USERNAME[custom_MQTT_USERNAME_LEN];
 char custom_MQTT_PASSWORD[custom_MQTT_PASSWORD_LEN];
 char custom_MQTT_BASETOPIC[custom_MQTT_BASETOPIC_LEN];
+char customhtml[24] = "type=\"checkbox\""; //Used for Metric Degrees checkbox in Config Portal
+bool USE_METRIC_DEGREES = false; //Default to Imperial Degrees
+
 
 // SSID and PW for Config Portal
 String ssid = "iGrillClient_" + String(ESP_getChipId(), HEX);
@@ -676,11 +679,16 @@ void wifi_manager()
   ESP_WMParameter MQTT_USERNAME_FIELD(MQTT_USERNAME_Label, "MQTT USERNAME", custom_MQTT_USERNAME, custom_MQTT_USERNAME_LEN);// MQTT_USERNAME
   ESP_WMParameter MQTT_PASSWORD_FIELD(MQTT_PASSWORD_Label, "MQTT PASSWORD", custom_MQTT_PASSWORD, custom_MQTT_PASSWORD_LEN);// MQTT_PASSWORD
   ESP_WMParameter MQTT_BASETOPIC_FIELD(MQTT_BASETOPIC_Label, "MQTT BASE TOPIC", custom_MQTT_BASETOPIC, custom_MQTT_BASETOPIC_LEN);// MQTT_BASETOPIC
+  if (USE_METRIC_DEGREES)
+    strcat(customhtml, " checked"); //check the box so the portal shows the correct state
+  ESP_WMParameter USE_METRIC_DEGREES_CHECKBOX(USE_METRIC_DEGREES_Label, "Use Metric Degrees (&#176;C)", "T", 2, customhtml, WFM_LABEL_AFTER);
+
   ESP_wifiManager.addParameter(&MQTT_SERVER_FIELD);
   ESP_wifiManager.addParameter(&MQTT_SERVERPORT_FIELD);
   ESP_wifiManager.addParameter(&MQTT_USERNAME_FIELD);
   ESP_wifiManager.addParameter(&MQTT_PASSWORD_FIELD);
   ESP_wifiManager.addParameter(&MQTT_BASETOPIC_FIELD);
+  ESP_wifiManager.addParameter(&USE_METRIC_DEGREES_CHECKBOX);
   ESP_wifiManager.setMinimumSignalQuality(-1);
   ESP_wifiManager.setConfigPortalChannel(0);  // Set config portal channel, Use 0 => random channel from 1-13
 
@@ -742,6 +750,7 @@ void wifi_manager()
   strcpy(custom_MQTT_USERNAME, MQTT_USERNAME_FIELD.getValue());
   strcpy(custom_MQTT_PASSWORD, MQTT_PASSWORD_FIELD.getValue());
   strcpy(custom_MQTT_BASETOPIC, MQTT_BASETOPIC_FIELD.getValue());
+  USE_METRIC_DEGREES = (strncmp(USE_METRIC_DEGREES_CHECKBOX.getValue(), "T", 1) == 0);
   writeConfigFile();  // Writing JSON config file to flash for next boot
   digitalWrite(LED_BUILTIN, LED_OFF); // Turn LED off as we are not in configuration mode.
 }
@@ -913,7 +922,10 @@ void mqttAnnounce()
   probe1JSON["device_class"] = "temperature"; 
   probe1JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe1";
   probe1JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_1";
-  probe1JSON["unit_of_measurement"] = "°F";
+  if(USE_METRIC_DEGREES)
+    probe1JSON["unit_of_measurement"] = "°C";
+  else
+    probe1JSON["unit_of_measurement"] = "°F"; 
   probe1JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
   probe1JSON["payload_available"] = "online";
   probe1JSON["payload_not_available"] = "offline";
@@ -925,7 +937,10 @@ void mqttAnnounce()
   probe2JSON["device_class"] = "temperature"; 
   probe2JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe2";
   probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2";
-  probe2JSON["unit_of_measurement"] = "°F";
+  if(USE_METRIC_DEGREES)
+    probe2JSON["unit_of_measurement"] = "°C";
+  else
+    probe2JSON["unit_of_measurement"] = "°F"; 
   probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
   probe2JSON["payload_available"] = "online";
   probe2JSON["payload_not_available"] = "offline";
@@ -937,7 +952,10 @@ void mqttAnnounce()
   probe3JSON["device_class"] = "temperature"; 
   probe3JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe3";
   probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3";
-  probe3JSON["unit_of_measurement"] = "°F";
+  if(USE_METRIC_DEGREES)
+    probe3JSON["unit_of_measurement"] = "°C";
+  else
+    probe3JSON["unit_of_measurement"] = "°F";    
   probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
   probe3JSON["payload_available"] = "online";
   probe3JSON["payload_not_available"] = "offline";
@@ -949,7 +967,10 @@ void mqttAnnounce()
   probe4JSON["device_class"] = "temperature"; 
   probe4JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe4";
   probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4";
-  probe4JSON["unit_of_measurement"] = "°F";
+  if(USE_METRIC_DEGREES)
+    probe4JSON["unit_of_measurement"] = "°C";
+  else
+    probe4JSON["unit_of_measurement"] = "°F"; 
   probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
   probe4JSON["payload_available"] = "online";
   probe4JSON["payload_not_available"] = "offline";
@@ -1027,6 +1048,9 @@ bool readConfigFile()
       strcpy(custom_MQTT_PASSWORD, json[MQTT_PASSWORD_Label]);
     if (json.containsKey(MQTT_BASETOPIC_Label))
       strcpy(custom_MQTT_BASETOPIC, json[MQTT_BASETOPIC_Label]);
+    if (json.containsKey(USE_METRIC_DEGREES_Label))
+      USE_METRIC_DEGREES = json[USE_METRIC_DEGREES_Label];
+
   }
   IGRILLLOGGER("\nConfig File successfully parsed", 0);
   return true;
@@ -1042,6 +1066,7 @@ bool writeConfigFile()
   json[MQTT_USERNAME_Label] = custom_MQTT_USERNAME;
   json[MQTT_PASSWORD_Label] = custom_MQTT_PASSWORD;
   json[MQTT_BASETOPIC_Label] = custom_MQTT_BASETOPIC;
+  json[USE_METRIC_DEGREES_Label] = USE_METRIC_DEGREES;
   // Open file for writing
   File f = FileFS.open(CONFIG_FILE, "w"); 
   if (!f)
@@ -1136,11 +1161,12 @@ static void handleLongPressStop()
 // Display Saved Configuration Information (Trigger by pressing and holding the reset button for a few seconds)
 void newConfigData() 
 {
-  IGRILLLOGGER("custom_MQTT_SERVER: " + String(custom_MQTT_SERVER), 0); 
-  IGRILLLOGGER("custom_MQTT_SERVERPORT: " + String(custom_MQTT_SERVERPORT), 0); 
-  IGRILLLOGGER("custom_MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0); 
-  IGRILLLOGGER("custom_MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0); 
-  IGRILLLOGGER("custom_MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
+  IGRILLLOGGER("MQTT_SERVER: " + String(custom_MQTT_SERVER), 0); 
+  IGRILLLOGGER("MQTT_SERVERPORT: " + String(custom_MQTT_SERVERPORT), 0); 
+  IGRILLLOGGER("MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0); 
+  IGRILLLOGGER("MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0); 
+  IGRILLLOGGER("MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
+  IGRILLLOGGER("Use Metric Degrees: " + String(USE_METRIC_DEGREES), 0); 
 }
 
 

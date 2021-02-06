@@ -40,12 +40,15 @@
 #define MQTT_PASSWORD            "password"
 #define MQTT_BASETOPIC           "igrill" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
 
-// Labels and max field lengths MQTT Custom parameters used in the Configuration Portal
-#define MQTT_SERVER_Label             "MQTT_SERVER_Label"
-#define MQTT_SERVERPORT_Label         "MQTT_SERVERPORT_Label"
-#define MQTT_USERNAME_Label           "MQTT_USERNAME_Label"
-#define MQTT_PASSWORD_Label           "MQTT_PASSWORD_Label"
-#define MQTT_BASETOPIC_Label           "MQTT_BASETOPIC_Label"
+
+// Labels and max field lengths MQTT Custom parameters used in the JSON File Created From The Configuration Portal Data
+#define MQTT_SERVER_Label             "MQTT_SERVER"
+#define MQTT_SERVERPORT_Label         "MQTT_SERVERPORT"
+#define MQTT_USERNAME_Label           "MQTT_USERNAME"
+#define MQTT_PASSWORD_Label           "MQTT_PASSWORD"
+#define MQTT_BASETOPIC_Label          "MQTT_BASETOPIC"
+#define USE_METRIC_DEGREES_Label      "METRIC_DEGREES"
+
 // MQTT Field Lengths (Change the Lengths here if the field isnt large enough)
 #define custom_MQTT_SERVER_LEN       20
 #define custom_MQTT_PORT_LEN          5
