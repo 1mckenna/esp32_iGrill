@@ -141,6 +141,24 @@ After you have configured the esp32_iGrill Client and have it connected to the s
 ![igrill_ha_device](https://github.com/1mckenna/esp32_iGrill/blob/main/images/igrill_ha_device.png?raw=true)
 ## Detailed View
 ![igrill_ha_device_details](https://github.com/1mckenna/esp32_iGrill/blob/main/images/igrill_ha_device_details.png?raw=true)
+## Sample HA Dashboard
+Below are some images of a sample Home Assistant Dashboard for the iGrill. 
+(Dashboard based off the work of stogs and Jerrit in this [thread](https://community.home-assistant.io/t/weber-igrill-2-integration-with-lovelace-ui/61880/184))
+
+### Setup Steps
+
+All the configs needed to setup the dashboard have been placed in the ha_example_config directory.</br> The only thing you should have to change in the **ALL** the files below is the mac address shown to match your iGrill device.
+ 1. Copy the contents of ha_example_config/automations/igrill.yaml into your automations.yaml
+ 2. Copy the contents of ha_example_config/sensors/igrill.yaml into your configuration.yaml or your sensors.yaml
+ 3. Copy the contents of ha_example_config/input_numbers/igrill.yaml into your configuration.yaml or input_numbers.yaml
+ 4. Copy the contents of ha_example_config/lovelace-ui-igrill.yaml into your lovelace-ui.yaml or copy the contents to the clipboard, put your Home Assistant Dashboard into Edit Mode, then open the Raw Configuration editor and paste in the contents.
+
+### iGrill Device Connected
+![ha_sample_dashboard.png](https://github.com/1mckenna/esp32_iGrill/blob/main/images/ha_sample_dashboard.png?raw=true)
+
+### iGrill Device Disconnected
+![ha_sample_dashboard_disconnected.png](https://github.com/1mckenna/esp32_iGrill/blob/main/images/ha_sample_dashboard_disconnected.png?raw=true)
+
 ## Other Notes
   * You can replace the ESP32 used to talk to the iGrill without needing to make any changes on the Home Assistant side. This is why we use the iGrill MAC in the MQTT topics instead of relying on the ESP32 Device MAC.
   * The Battery Level shown for the device in Home Assistant

@@ -1,0 +1,78 @@
+- alias: "Monitor Grill Temp Alert"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.igrill_alert_temp
+      to: 'Alert'
+  action:
+    - service: notify.admin
+      data:
+        message: "Grill temp outside limits. Currently {{ states.sensor.igrill_d481ca223348_probe_4.state }} °F"
+
+- alias: "Monitor Grill Temp Normal"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.igrill_alert_temp
+      to: 'Normal'
+  action:
+    - service: notify.admin
+      data:
+        message: "Grill temp within limits. Currently {{ states.sensor.igrill_d481ca223348_probe_4.state }} °F"
+
+- alias: "Probe 1 Target Temp"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.target_alert_temp_probe_1
+      to: 'Alert'
+  action:
+    - service: notify.admin
+      data:
+        message: "Probe 1 has reached the target temp. Currently {{ states.sensor.igrill_d481ca223348_probe_1.state }} °F"
+
+- alias: "Probe 2 Target Temp"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.target_alert_temp_probe_2
+      to: 'Alert'
+  action:
+    - service: notify.admin
+      data:
+        message: "Probe 2 has reached the target temp. Currently {{ states.sensor.igrill_d481ca223348_probe_2.state }} °F"
+
+- alias: "Probe 3 Target Temp"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.target_alert_temp_probe_3
+      to: 'Alert'
+  action:
+    - service: notify.admin
+      data:
+        message: "Probe 3 has reached the target temp. Currently {{ states.sensor.igrill_d481ca223348_probe_3.state }} °F"
+
+- alias: "Probe 4 Target Temp"
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.target_alert_temp_probe_4
+      to: 'Alert'
+  action:
+    - service: notify.admin
+      data:
+        message: "Probe 4 has reached the target temp. Currently {{ states.sensor.igrill_d481ca223348_probe_4.state }} °F"
+
+- alias: "Monitor iGrill Device Connectivity"
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: sensor.esp32_igrill_ble_client
+      to: 'offline'
+      for:
+        minutes: 5
+  action:
+    - service: notify.admin
+      data:
+        message: "!! - iGrill Device Disconnected - !!"

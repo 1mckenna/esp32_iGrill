@@ -1,0 +1,204 @@
+  - title: BBQ
+    path: bbq
+    icon: 'mdi:grill'
+    panel: false
+    badges: []
+    cards:
+      - type: vertical-stack
+        title: Weber iGrillv2
+        cards:
+          - type: entity-filter
+            color_state: true
+            entities:
+              - entity: sensor.igrill_device_connectivity_status
+                name: iGrill Status
+                icon: 'mdi:access-point'
+              - entity: sensor.esp32_igrill_ble_client
+                name: ESP32 iGrill BLE Client
+                icon: 'mdi:access-point'
+            state_filter:
+              - online
+              - unknown
+          - type: gauge
+            title: Battery Level
+            entity: sensor.igrill_d481ca223348_battery_level
+            min: 0
+            max: 100
+            severity:
+              red: 20
+              green: 65
+              amber: 50
+          - type: horizontal-stack
+            cards:
+              - type: conditional
+                conditions:
+                  - entity: sensor.igrill_d481ca223348_probe_1
+                    state_not: unavailable
+                card:
+                  type: gauge
+                  title: Probe 1
+                  entity: sensor.igrill_d481ca223348_probe_1
+                  min: 60
+                  max: 250
+                  severity:
+                    red: 190
+                    green: 65
+                    amber: 0
+              - type: conditional
+                conditions:
+                  - entity: sensor.igrill_d481ca223348_probe_2
+                    state_not: unavailable
+                card:
+                  type: gauge
+                  title: Probe 2
+                  entity: sensor.igrill_d481ca223348_probe_2
+                  min: 60
+                  max: 250
+                  severity:
+                    red: 190
+                    green: 65
+                    amber: 0
+          - type: horizontal-stack
+            cards:
+              - type: conditional
+                conditions:
+                  - entity: sensor.igrill_d481ca223348_probe_3
+                    state_not: unavailable
+                card:
+                  type: gauge
+                  title: Probe 3
+                  entity: sensor.igrill_d481ca223348_probe_3
+                  min: 60
+                  max: 300
+                  severity:
+                    red: 260
+                    green: 65
+                    amber: 200
+              - type: conditional
+                conditions:
+                  - entity: sensor.igrill_d481ca223348_probe_4
+                    state_not: unavailable
+                card:
+                  type: gauge
+                  title: Probe 4
+                  entity: sensor.igrill_d481ca223348_probe_4
+                  min: 60
+                  max: 300
+                  severity:
+                    red: 260
+                    green: 65
+                    amber: 200
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Grill Target Temperatures
+            show_header_toggle: false
+            entities:
+              - entity: input_number.igrill_alert_low
+                name: Low
+              - entity: input_number.igrill_alert_high
+                name: High
+            show_name: true
+            show_icon: true
+            show_state: true
+          - type: entities
+            title: Probe Temp Targets
+            show_header_toggle: false
+            entities:
+              - entity: input_number.igrill_probe_1_target
+                name: Probe 1
+              - entity: input_number.igrill_probe_2_target
+                name: Probe 2
+              - entity: input_number.igrill_probe_3_target
+                name: Probe 3
+              - entity: input_number.igrill_probe_4_target
+                name: Probe 4
+            show_name: true
+            show_icon: true
+            show_state: true
+          - type: glance
+            entities:
+              - entity: input_number.igrill_probe_1_target
+                name: Probe 1
+              - entity: input_number.igrill_probe_2_target
+                name: Probe 2
+              - entity: input_number.igrill_probe_3_target
+                name: Probe 3
+              - entity: input_number.igrill_probe_4_target
+                name: Probe 4
+            show_name: true
+            show_icon: false
+          - type: glance
+            entities:
+              - entity: sensor.target_alert_temp_probe_1
+                name: Probe 1 State
+              - entity: sensor.target_alert_temp_probe_2
+                name: Probe 2 State
+              - entity: sensor.target_alert_temp_probe_3
+                name: Probe 3 State
+              - entity: sensor.target_alert_temp_probe_4
+                name: Probe 4 State
+            show_name: false
+            show_icon: false
+      - type: history-graph
+        title: History
+        entities:
+          - sensor.igrill_d481ca223348_probe_1
+          - sensor.igrill_d481ca223348_probe_2
+          - sensor.igrill_d481ca223348_probe_3
+          - sensor.igrill_d481ca223348_probe_4
+        hours_to_show: 14
+        refresh_interval: 0
+      - type: markdown
+        content: >+
+          <ha-icon icon="mdi:food-drumstick"></ha-icon> **Cook Type:**  Brisket
+
+          <ha-icon icon="mdi:pine-tree-fire"></ha-icon> **Wood:** 50% Cherry/50%
+          Mesquite
+
+          <ha-icon icon="mdi:fire"></ha-icon> **Smoker Temp:** 250 °F
+
+          <ha-icon icon="mdi:thermometer"></ha-icon> **Wrap Temp:** 170 °F
+
+          <ha-icon icon="mdi:thermometer"></ha-icon> **Pull Temp:** 205 °F
+
+          <ha-icon icon="mdi:clock"></ha-icon> **Rest Length:** 2 - 4 hrs
+
+          <ha-icon icon="mdi:calendar"></ha-icon> **Date:**  2/7/2021
+
+          <ha-icon icon="mdi:clock-in"></ha-icon> **Start Time:** 00:08
+
+          <ha-icon icon="mdi:clock-out"></ha-icon> **Time Pulled:** 12:28
+
+          <ha-icon icon="mdi:notebook-outline"></ha-icon> **Cook Notes:** N/A
+
+        title: Cooking Notes
+      - type: vertical-stack
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: Temperature Alerting
+                entities:
+                  - entity: automation.monitor_grill_temp_alert
+                    name: Monitor Grill High Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.monitor_grill_temp_normal
+                    name: Monitor Grill Low Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.probe_1_target_temp
+                    name: Monitor Probe 1 Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.probe_2_target_temp
+                    name: Monitor Probe 2 Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.probe_3_target_temp
+                    name: Monitor Probe 3 Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.probe_4_target_temp
+                    name: Monitor Probe 4 Temp
+                    icon: 'mdi:thermometer-alert'
+                  - entity: automation.monitor_igrill_device_connectivity
+                    icon: 'mdi:access-point'
+                show_header_toggle: false
+                state_color: true

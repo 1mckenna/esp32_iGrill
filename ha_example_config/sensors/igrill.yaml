@@ -1,0 +1,57 @@
+########### iGRILL ALERT SENSORS ############
+- platform: template
+  sensors:
+    grill_alert_temp:
+      value_template: >-
+        {% if (states.sensor.igrill_d481ca223348_probe_4.state | int) < (states.input_number.igrill_alert_low.state | int) or (states.sensor.igrill_d481ca223348_probe_4.state | int)  > (states.input_number.igrill_alert_high.state | int) %}
+          Alert
+        {% else %}
+          Normal
+        {% endif %}
+      friendly_name: Grill Temp Alert
+      
+- platform: template
+  sensors:
+    target_alert_temp_probe_1:
+      value_template: >-
+        {% if (states.sensor.igrill_d481ca223348_probe_1.state | int) >= (states.input_number.igrill_probe_1_target.state | int) %}
+          Alert
+        {% else %}
+          Normal
+        {% endif %}
+      friendly_name: Probe 1 Target Alert
+- platform: template
+  sensors:
+    target_alert_temp_probe_2:
+      value_template: >-
+        {% if (states.sensor.igrill_d481ca223348_probe_2.state | int) >= (states.input_number.igrill_probe_2_target.state | int) %}
+          Alert
+        {% else %}
+          Normal
+        {% endif %}
+      friendly_name: Probe 2 Target Alert
+- platform: template
+  sensors:
+    target_alert_temp_probe_3:
+      value_template: >-
+        {% if (states.sensor.igrill_d481ca223348_probe_3.state | int) >= (states.input_number.igrill_probe_3_target.state | int) %}
+          Alert
+        {% else %}
+          Normal
+        {% endif %}
+      friendly_name: Probe 3 Target Alert
+- platform: template
+  sensors:
+    target_alert_temp_probe_4:
+      value_template: >-
+        {% if (states.sensor.igrill_d481ca223348_probe_4.state | int) >= (states.input_number.igrill_probe_4_target.state | int) %}
+          Alert
+        {% else %}
+          Normal
+        {% endif %}
+      friendly_name: Probe 4 Target Alert
+
+- platform: mqtt
+  state_topic: "homeassistant/sensor/igrill_d481ca223348/status"
+  name: ESP32 iGrill BLE Client
+  json_attributes_topic: "homeassistant/sensor/igrill_d481ca223348/systeminfo"
