@@ -124,7 +124,8 @@ When the device is in configuarion mode it will start a wireless access point na
    * If you have connected to a network previously you will see similar information as shown in the yellow boxes.
    * Select Configuration to be taken to the device configuration page.</br>
     ![wm_config_main](https://github.com/1mckenna/esp32_iGrill/blob/main/images/wm_config_main.png?raw=true)
-5. You should now be at the main configuration page.
+5. You should now be at the main configuration page.</br>
+<span style="color:red"><i>Note: Use of a hidden SSID is unsupported (broken)</i></span></br>
    * Discovered networks will show up in the area noted by the green box.
    * By selecting a discovered network it will autopopulate that name into the SSID field.
    * If you only have one network you can leave SSID1 and its corresponding password field blank
