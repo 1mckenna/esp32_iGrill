@@ -717,7 +717,7 @@ void wifi_manager()
   }
   // Only clear then save data if CP entered and with new valid Credentials
   // No CP => stored getSSID() = ""
-  if ( String(ESP_wifiManager.getSSID(0)) != "" && String(ESP_wifiManager.getSSID(1)) != "" )
+  if ( String(ESP_wifiManager.getSSID(0)) != "" && String(ESP_wifiManager.getPW(0)) != "" )
   {
     memset(&WM_config, 0, sizeof(WM_config));
     for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
