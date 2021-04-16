@@ -354,7 +354,17 @@ bool setupBatteryCharacteristic()
       iGrillClient->disconnect();
       return false;
     }
-    batteryCharacteristic->registerForNotify(notifyCallback);
+    if (batteryCharacteristic->canNotify())
+    {
+      batteryCharacteristic->registerForNotify(notifyCallback);
+      IGRILLLOGGER("  -- Battery Setup!",1);
+    }
+    if (batteryCharacteristic->canRead())
+    {
+      uint8_t value = batteryCharacteristic->readUInt8();
+      IGRILLLOGGER(" %% Battery Level: " + String(value) + "%", 2);
+      publishBattery(value);
+    }
     return true;
   }
   catch(...)
