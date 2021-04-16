@@ -55,6 +55,8 @@ char custom_MQTT_PASSWORD[custom_MQTT_PASSWORD_LEN];
 char custom_MQTT_BASETOPIC[custom_MQTT_BASETOPIC_LEN];
 char customhtml[24] = "type=\"checkbox\""; //Used for Metric Degrees checkbox in Config Portal
 bool USE_METRIC_DEGREES = false; //Default to Imperial Degrees
+char customhtmlNoMultiWifi[24] = "type=\"checkbox\""; //Used for MultiWifi checkbox in Config Portal
+bool NO_MULTI_WIFI = false; // Default use MultiWifi
 
 
 // SSID and PW for Config Portal
@@ -563,6 +565,38 @@ void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
   #endif 
 }
 
+uint8_t connectWiFi()
+{
+  uint8_t status;
+  LOGERROR(F("ConnectWiFi with :"));
+
+  for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
+  {
+    if ( (String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE) )
+    {
+      LOGERROR3(F("* Using SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw );
+
+      LOGERROR(F("Connecting Wifi..."));
+      WiFi.mode(WIFI_STA);
+
+      status = WiFi.begin(WM_config.WiFi_Creds[i].wifi_ssid, WM_config.WiFi_Creds[i].wifi_pw);
+      status = WiFi.waitForConnectResult();
+
+      if ( WiFi.isConnected() )
+      {
+        LOGERROR(F("WiFi connected"));
+        LOGERROR3(F("SSID:"), WiFi.SSID(), F(",RSSI="), WiFi.RSSI());
+        LOGERROR3(F("Channel:"), WiFi.channel(), F(",IP address:"), WiFi.localIP() );
+        return status;
+      }
+      else
+        LOGERROR(F("No success, trying next credentials"));
+    }
+  }
+  LOGERROR(F("WiFi not connected"));
+  return status;
+}
+
 uint8_t connectMultiWiFi()
 {
   uint8_t status;
@@ -634,9 +668,18 @@ void check_WiFi()
 {
   if ( (WiFi.status() != WL_CONNECTED) )
   {
-    IGRILLLOGGER("WiFi lost. Call connectMultiWiFi in loop",0);
+    IGRILLLOGGER("WiFi lost.", 0);
     disconnectMQTT();
-    connectMultiWiFi();
+    if (NO_MULTI_WIFI)
+    {
+      IGRILLLOGGER("Call connectWiFi in loop", 0);
+      connectWiFi();
+    }
+    else
+    {
+      IGRILLLOGGER("Call connectMultiWiFi in loop", 0);
+      connectMultiWiFi();
+    }
   }
 }
 
@@ -683,12 +726,17 @@ void wifi_manager()
     strcat(customhtml, " checked"); //check the box so the portal shows the correct state
   ESP_WMParameter USE_METRIC_DEGREES_CHECKBOX(USE_METRIC_DEGREES_Label, "Use Metric Degrees (&#176;C)", "T", 2, customhtml, WFM_LABEL_AFTER);
 
+  if (NO_MULTI_WIFI)
+    strcat(customhtmlNoMultiWifi, " checked"); //check the box so the portal shows the correct state
+  ESP_WMParameter NO_MULTI_WIFI_CHECKBOX(NO_MULTI_WIFI_Label, "Don't use MultWifi", "T", 2, customhtmlNoMultiWifi, WFM_LABEL_AFTER);
+
   ESP_wifiManager.addParameter(&MQTT_SERVER_FIELD);
   ESP_wifiManager.addParameter(&MQTT_SERVERPORT_FIELD);
   ESP_wifiManager.addParameter(&MQTT_USERNAME_FIELD);
   ESP_wifiManager.addParameter(&MQTT_PASSWORD_FIELD);
   ESP_wifiManager.addParameter(&MQTT_BASETOPIC_FIELD);
   ESP_wifiManager.addParameter(&USE_METRIC_DEGREES_CHECKBOX);
+  ESP_wifiManager.addParameter(&NO_MULTI_WIFI_CHECKBOX);
   ESP_wifiManager.setMinimumSignalQuality(-1);
   ESP_wifiManager.setConfigPortalChannel(0);  // Set config portal channel, Use 0 => random channel from 1-13
 
@@ -751,6 +799,7 @@ void wifi_manager()
   strcpy(custom_MQTT_PASSWORD, MQTT_PASSWORD_FIELD.getValue());
   strcpy(custom_MQTT_BASETOPIC, MQTT_BASETOPIC_FIELD.getValue());
   USE_METRIC_DEGREES = (strncmp(USE_METRIC_DEGREES_CHECKBOX.getValue(), "T", 1) == 0);
+  NO_MULTI_WIFI      = (strncmp(NO_MULTI_WIFI_CHECKBOX.getValue(), "T", 1) == 0);
   writeConfigFile();  // Writing JSON config file to flash for next boot
   digitalWrite(LED_BUILTIN, LED_OFF); // Turn LED off as we are not in configuration mode.
 }
@@ -1050,7 +1099,8 @@ bool readConfigFile()
       strcpy(custom_MQTT_BASETOPIC, json[MQTT_BASETOPIC_Label]);
     if (json.containsKey(USE_METRIC_DEGREES_Label))
       USE_METRIC_DEGREES = json[USE_METRIC_DEGREES_Label];
-
+    if (json.containsKey(NO_MULTI_WIFI_Label))
+      NO_MULTI_WIFI = json[NO_MULTI_WIFI_Label];
   }
   IGRILLLOGGER("\nConfig File successfully parsed", 0);
   return true;
@@ -1067,6 +1117,7 @@ bool writeConfigFile()
   json[MQTT_PASSWORD_Label] = custom_MQTT_PASSWORD;
   json[MQTT_BASETOPIC_Label] = custom_MQTT_BASETOPIC;
   json[USE_METRIC_DEGREES_Label] = USE_METRIC_DEGREES;
+  json[NO_MULTI_WIFI_Label] = NO_MULTI_WIFI;
   // Open file for writing
   File f = FileFS.open(CONFIG_FILE, "w"); 
   if (!f)
@@ -1166,7 +1217,8 @@ void newConfigData()
   IGRILLLOGGER("MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0); 
   IGRILLLOGGER("MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0); 
   IGRILLLOGGER("MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
-  IGRILLLOGGER("Use Metric Degrees: " + String(USE_METRIC_DEGREES), 0); 
+  IGRILLLOGGER("Use Metric Degrees: " + String(USE_METRIC_DEGREES), 0);
+  IGRILLLOGGER("Don't use MultiWifi: " + String(NO_MULTI_WIFI), 0);
 }
 
 
@@ -1279,8 +1331,16 @@ void setup()
     }
     else if ( WiFi.status() != WL_CONNECTED ) 
     {
-      IGRILLLOGGER("ConnectMultiWiFi in setup", 0);
-      connectMultiWiFi();
+      if (NO_MULTI_WIFI)
+      {
+        IGRILLLOGGER("Call connectWiFi in setup", 0);
+        connectWiFi();
+      }
+      else
+      {
+        IGRILLLOGGER("Call connectMultiWiFi in setup", 0);
+        connectMultiWiFi();
+      }
     }
   }
   digitalWrite(LED_BUILTIN, LED_OFF); // Turn led off as we are not in configuration mode.

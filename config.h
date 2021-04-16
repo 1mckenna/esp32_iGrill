@@ -48,6 +48,7 @@
 #define MQTT_PASSWORD_Label           "MQTT_PASSWORD"
 #define MQTT_BASETOPIC_Label          "MQTT_BASETOPIC"
 #define USE_METRIC_DEGREES_Label      "METRIC_DEGREES"
+#define NO_MULTI_WIFI_Label           "NO_MULTI_WIFI"
 
 // MQTT Field Lengths (Change the Lengths here if the field isnt large enough)
 #define custom_MQTT_SERVER_LEN       20
