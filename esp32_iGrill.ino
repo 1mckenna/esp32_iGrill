@@ -809,7 +809,7 @@ void connectMQTT()
   }
 }
 
-bool setDeviceJSONObject(const char * fwVersion, const char * iGrillBLEAddress)
+void setDeviceJSONObject(const char * fwVersion, const char * iGrillBLEAddress)
 {
   iGrillMac = String(iGrillBLEAddress); //Populate the iGrill Mac Address now that we are connected
   iGrillMac.replace(":",""); //Remove : from mac and replace with _
@@ -824,7 +824,7 @@ bool setDeviceJSONObject(const char * fwVersion, const char * iGrillBLEAddress)
 }
 
 //Publish iGrill BLE Client and connected iGrill info to MQTT
-bool publishSystemInfo()
+void publishSystemInfo()
 {
   if(mqtt_client)
   {
