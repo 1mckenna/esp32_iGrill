@@ -192,10 +192,10 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     }
     else
     {
-      IGRILLLOGGER(" * Probe 1 Temp: "+ String(pData[0]),2);
-      publishProbeTemp(1,pData[0]);
+      short t = (pData[1] << 8) | pData[0];
+      IGRILLLOGGER(" * Probe 1 Temp: " + String(t), 2);
+      publishProbeTemp(1, t);
     }
-
   }
   else if(PROBE2_TEMPERATURE.equals(pBLERemoteCharacteristic->getUUID()))
   {
@@ -206,10 +206,10 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     }
     else
     {
-      IGRILLLOGGER(" * Probe 2 Temp: "+String(pData[0]),2);
-      publishProbeTemp(2,pData[0]);
+      short t = (pData[1] << 8) | pData[0];
+      IGRILLLOGGER(" * Probe 2 Temp: " + String(t), 2);
+      publishProbeTemp(2, t);
     }
-
   }
   else if(PROBE3_TEMPERATURE.equals(pBLERemoteCharacteristic->getUUID()))
   {
@@ -220,10 +220,10 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     }
     else
     {
-      IGRILLLOGGER(" * Probe 3 Temp: "+String(pData[0]),2);
-      publishProbeTemp(3,pData[0]);
+      short t = (pData[1] << 8) | pData[0];
+      IGRILLLOGGER(" * Probe 3 Temp: " + String(t), 2);
+      publishProbeTemp(3, t);
     }
-
   }
   else if(PROBE4_TEMPERATURE.equals(pBLERemoteCharacteristic->getUUID()))
   {
@@ -234,10 +234,10 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     }
     else
     {
-      IGRILLLOGGER(" * Probe 4 Temp: "+String(pData[0]),2);
-      publishProbeTemp(4,pData[0]);
+      short t = (pData[1] << 8) | pData[0];
+      IGRILLLOGGER(" * Probe 4 Temp: " + String(t), 2);
+      publishProbeTemp(4, t);
     }
-
   }
   else if(BATTERY_LEVEL.equals(pBLERemoteCharacteristic->getUUID()))
   {
