@@ -668,7 +668,7 @@ void heartBeatPrint()
   }
   else //If we dont have an mqtt client set we need to initate a new BLE Scan to try and find a device.
   {
-    if(num%6 == 0) //Only attempt to re-scan every 6th time we make it to the check unconnected (If using default this will be once a min.)
+    if(num%3 == 0) //Only attempt to re-scan every 3th time we make it to the check unconnected (If using default this will be twice a min.)
       reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
   num++;
@@ -1266,7 +1266,7 @@ void check_status()
 
   // Print iGrill System Info every IGRILL_HEARTBEAT_INTERVAL (5) minutes.
   if ((current_millis > igrillheartbeat_timeout) || (igrillheartbeat_timeout == 0))
-  { 
+  {
     publishSystemInfo();
     igrillheartbeat_timeout = current_millis + IGRILL_HEARTBEAT_INTERVAL;
   }
@@ -1358,8 +1358,8 @@ void setup()
   BLEDevice::setPower(ESP_PWR_LVL_P7);
   BLEScan* pBLEScan = BLEDevice::getScan();
   pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setInterval(1349);
-  pBLEScan->setWindow(449);
+  pBLEScan->setInterval(100);
+  pBLEScan->setWindow(99);
   pBLEScan->setActiveScan(true);
   pBLEScan->start(5, false);
   connectMQTT();
@@ -1394,7 +1394,7 @@ void loop()
   else if(reScan)
   {
     IGRILLLOGGER("Scanning for iGrill Devices...", 0);
-    BLEDevice::getScan()->start(5, false);
+    BLEDevice::getScan()->start(2, false);
     reScan = false; //Set reScan to false now that a scan has been started if a device is not found at next heartbeat a new scan will be started
   }
   check_status();
