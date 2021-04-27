@@ -122,8 +122,8 @@ WiFi_AP_IPConfig  WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
 
 // Create an ESP32 WiFiClient class to connect to the MQTT server
-WiFiClient *client = NULL;
-PubSubClient *mqtt_client = NULL;
+WiFiClient *client = nullptr;
+PubSubClient *mqtt_client = nullptr;
 
 //iGrill BLE Client Logging Function
 void IGRILLLOGGER(String logMsg, int requiredLVL)
@@ -177,6 +177,8 @@ static BLEAdvertisedDevice* myDevice;
 static String deviceStr ="";
 static String iGrillMac="";
 static String iGrillModel="";
+
+#define DELETE(ptr) { if (ptr != nullptr) {delete ptr; ptr = nullptr;} }
 #pragma endregion
 #pragma region iGrill_BLE_Functions
 //The registered iGrill Characteristics call this function when their values change
@@ -259,16 +261,19 @@ class MyClientCallback : public BLEClientCallbacks
     //Lost Connection to Device Resetting all Variables....
     connected = false; //No longer connected to iGrill
     //Free up memory
-    free(iGrillClient);
-    free(authRemoteCharacteristic);
-    free(batteryCharacteristic);
-    free(probe1TempCharacteristic);
-    free(probe2TempCharacteristic);
-    free(probe3TempCharacteristic);
-    free(probe4TempCharacteristic);
-    free(iGrillAuthService);
-    free(iGrillService);
-    free(iGrillBattService);
+    DELETE(iGrillClient);
+
+    // the service references are owned by iGrillClient and are deleted by it's destructor
+    authRemoteCharacteristic = nullptr;
+    batteryCharacteristic = nullptr;
+    probe1TempCharacteristic = nullptr;
+    probe2TempCharacteristic = nullptr;
+    probe3TempCharacteristic = nullptr;
+    probe4TempCharacteristic = nullptr;
+    iGrillAuthService = nullptr;
+    iGrillService = nullptr;
+    iGrillBattService = nullptr;
+    
     deviceStr =""; //Reset the Device String used for MQTT publishing
     iGrillMac=""; //Reset the iGrillMac String used for MQTT publishing
     iGrillModel=""; //Reset the iGrillModel String used for MQTT publishing
@@ -277,6 +282,8 @@ class MyClientCallback : public BLEClientCallbacks
     reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
 };
+
+static MyClientCallback oMyClientCallback;
 
 //Register Callback for iGrill Probes
 void setupProbes()
@@ -403,6 +410,8 @@ class MySecurity : public BLESecurityCallbacks
 	}
 };
 
+static MySecurity oMySecurity;
+
 /*This function does the following
  - Connects and Pairs to the iGrill Device
  - Sets up the iGrill Authentication Service
@@ -419,17 +428,18 @@ bool connectToServer()
     IGRILLLOGGER(temp ,1);
     //Setting up the iGrill Pairing Paramaters (Without Bonding you can't read the Temp Probes)
     BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
-	  BLEDevice::setSecurityCallbacks(new MySecurity());
-    BLESecurity *pSecurity = new BLESecurity();
-    pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
-    pSecurity->setCapability(ESP_IO_CAP_NONE);
-    pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+	  BLEDevice::setSecurityCallbacks(&oMySecurity);
+
+    BLESecurity security;
+    security.setAuthenticationMode(ESP_LE_AUTH_BOND);
+    security.setCapability(ESP_IO_CAP_NONE);
+    security.setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+
     //End of the iGrill Pairing Paramaters
 
     iGrillClient  = BLEDevice::createClient(); //Creating the iGrill Client
     if(iGrillClient == nullptr)
     {
-      free(iGrillClient);
       reScan = true;
       IGRILLLOGGER("Connection Failed!", 1);
       return false;
@@ -437,13 +447,13 @@ bool connectToServer()
     delay(1*1000);
     if(!iGrillClient->connect(myDevice)) //Connecting to the iGrill Device
     {
-      free(iGrillClient);
+      DELETE(iGrillClient);
       reScan = true;
       IGRILLLOGGER("Connection Failed!",1);
       return false;
     }
     IGRILLLOGGER(" - Created client",1);
-    iGrillClient->setClientCallbacks(new MyClientCallback());
+    iGrillClient->setClientCallbacks(&oMyClientCallback);
     // Connect to the remote BLE Server.
     IGRILLLOGGER(" - Connected to iGrill BLE Server",1);
     delay(1*1000);
@@ -469,6 +479,7 @@ bool connectToServer()
         if (authRemoteCharacteristic == nullptr) 
         {
           IGRILLLOGGER(" - Authentication Failed (authRemoteCharacteristic is null)!",1);
+          return false;
         }
         //Start of Authentication Sequence
         IGRILLLOGGER(" - Writing iGrill App Challenge...",1);
@@ -521,6 +532,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(SERVICE_UUID)) 
     {
       BLEDevice::getScan()->stop();
+      DELETE(myDevice); // delete old stuff (don't need it anymore)
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       iGrillModel = "iGrillv2";
       doConnect = true;
@@ -528,12 +540,16 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
     else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(V3_SERVICE_UUID)) 
     {
       BLEDevice::getScan()->stop();
+      DELETE(myDevice); // delete old stuff (don't need it anymore)
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       iGrillModel = "iGrillv3";
       doConnect = true;
     }
   }
 };
+
+static MyAdvertisedDeviceCallbacks oMyAdvertisedDeviceCallbacks;
+
 #pragma endregion
 #pragma region WIFI_Fuctions
 
@@ -658,7 +674,7 @@ uint8_t connectMultiWiFi()
 void heartBeatPrint()
 {
   static int num = 1;
-  if(mqtt_client) //We have to check and see if we have a mqtt client created as this doesnt happen until the device is connected to an igrill device.
+  if(mqtt_client != nullptr) //We have to check and see if we have a mqtt client created as this doesnt happen until the device is connected to an igrill device.
   {
     if(!mqtt_client->connected())
     {
@@ -672,6 +688,7 @@ void heartBeatPrint()
       reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
   num++;
+  IGRILLLOGGER(String("free heap memory: ") + String(ESP.getFreeHeap()), 2);
 }
 
 void check_WiFi()
@@ -821,8 +838,14 @@ void disconnectMQTT()
 {
   try
   {
-    delete mqtt_client;
-    mqtt_client=NULL;
+    if (mqtt_client != nullptr)
+    {
+      if(mqtt_client->connected())
+      {
+        mqtt_client->disconnect();
+      }
+      DELETE(mqtt_client);
+    }
   }
   catch(...)
   {
@@ -842,9 +865,9 @@ void connectMQTT()
     //String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
     String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+ "/status";
     IGRILLLOGGER("Connecting to MQTT...", 0);
-    if (!client)
+    if (client == nullptr)
       client = new WiFiClient();
-    if(!mqtt_client)
+    if(mqtt_client == nullptr)
     {
       mqtt_client = new PubSubClient(*client);
       mqtt_client->setBufferSize(1024); //Needed as some JSON messages are too large for the default size
@@ -856,8 +879,7 @@ void connectMQTT()
     if (!mqtt_client->connect(String(ESP_getChipId(), HEX).c_str(), custom_MQTT_USERNAME, custom_MQTT_PASSWORD, lastWillTopic.c_str(), 1, true, "offline"))
     {
       IGRILLLOGGER("MQTT connection failed: " + String(mqtt_client->state()), 0);
-      delete mqtt_client;
-      mqtt_client=NULL;
+      DELETE(mqtt_client);
       delay(1*5000); //Delay for 5 seconds after a connection failure
     }
     else
@@ -1357,7 +1379,7 @@ void setup()
   BLEDevice::init("ESP32_iGrill");
   BLEDevice::setPower(ESP_PWR_LVL_P7);
   BLEScan* pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setAdvertisedDeviceCallbacks(&oMyAdvertisedDeviceCallbacks);
   pBLEScan->setInterval(100);
   pBLEScan->setWindow(99);
   pBLEScan->setActiveScan(true);
