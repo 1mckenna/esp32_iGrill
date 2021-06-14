@@ -305,23 +305,26 @@ void setupProbes()
           probe1TempCharacteristic->registerForNotify(notifyCallback);
           IGRILLLOGGER("  -- Probe 1 Setup!",1);
         }
-        probe2TempCharacteristic = iGrillService->getCharacteristic(PROBE2_TEMPERATURE);
-        if(probe2TempCharacteristic->canNotify())
+        if(iGrillModel != "iGrill_mini")
         {
-          probe2TempCharacteristic->registerForNotify(notifyCallback);
-          IGRILLLOGGER("  -- Probe 2 Setup!",1);
-        }
-        probe3TempCharacteristic = iGrillService->getCharacteristic(PROBE3_TEMPERATURE);
-        if(probe3TempCharacteristic->canNotify())
-        {
-          probe3TempCharacteristic->registerForNotify(notifyCallback);
-          IGRILLLOGGER("  -- Probe 3 Setup!",1);
-        }
-        probe4TempCharacteristic = iGrillService->getCharacteristic(PROBE4_TEMPERATURE);
-        if(probe4TempCharacteristic->canNotify())
-        {
-          probe4TempCharacteristic->registerForNotify(notifyCallback);
-          IGRILLLOGGER("  -- Probe 4 Setup!",1);
+          probe2TempCharacteristic = iGrillService->getCharacteristic(PROBE2_TEMPERATURE);
+          if(probe2TempCharacteristic->canNotify())
+          {
+            probe2TempCharacteristic->registerForNotify(notifyCallback);
+            IGRILLLOGGER("  -- Probe 2 Setup!",1);
+          }
+          probe3TempCharacteristic = iGrillService->getCharacteristic(PROBE3_TEMPERATURE);
+          if(probe3TempCharacteristic->canNotify())
+          {
+           probe3TempCharacteristic->registerForNotify(notifyCallback);
+           IGRILLLOGGER("  -- Probe 3 Setup!",1);
+          }
+          probe4TempCharacteristic = iGrillService->getCharacteristic(PROBE4_TEMPERATURE);
+          if(probe4TempCharacteristic->canNotify())
+          {
+            probe4TempCharacteristic->registerForNotify(notifyCallback);
+            IGRILLLOGGER("  -- Probe 4 Setup!",1);
+          }
         }
       }
       catch(...)
@@ -1025,51 +1028,54 @@ void mqttAnnounce()
   probe1JSON["payload_available"] = "online";
   probe1JSON["payload_not_available"] = "offline";
   serializeJson(probe1JSON,p1Payload);
+  
+  if(iGrillModel != "iGrill_mini")
+  {
+    DynamicJsonDocument probe2JSON(1024);
+    probe2JSON["device"] = deviceObj;
+    probe2JSON["name"] = "igrill_"+iGrillMac+" Probe 2";
+    probe2JSON["device_class"] = "temperature"; 
+    probe2JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe2";
+    probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2";
+    if(USE_METRIC_DEGREES)
+      probe2JSON["unit_of_measurement"] = "°C";
+    else
+      probe2JSON["unit_of_measurement"] = "°F"; 
+    probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+    probe2JSON["payload_available"] = "online";
+    probe2JSON["payload_not_available"] = "offline";
+    serializeJson(probe2JSON,p2Payload);
 
-  DynamicJsonDocument probe2JSON(1024);
-  probe2JSON["device"] = deviceObj;
-  probe2JSON["name"] = "igrill_"+iGrillMac+" Probe 2";
-  probe2JSON["device_class"] = "temperature"; 
-  probe2JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe2";
-  probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2";
-  if(USE_METRIC_DEGREES)
-    probe2JSON["unit_of_measurement"] = "°C";
-  else
-    probe2JSON["unit_of_measurement"] = "°F"; 
-  probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-  probe2JSON["payload_available"] = "online";
-  probe2JSON["payload_not_available"] = "offline";
-  serializeJson(probe2JSON,p2Payload);
+    DynamicJsonDocument probe3JSON(1024);
+    probe3JSON["device"] = deviceObj;
+    probe3JSON["name"] = "igrill_"+iGrillMac+" Probe 3";
+    probe3JSON["device_class"] = "temperature"; 
+    probe3JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe3";
+    probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3";
+    if(USE_METRIC_DEGREES)
+      probe3JSON["unit_of_measurement"] = "°C";
+    else
+      probe3JSON["unit_of_measurement"] = "°F";    
+    probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+    probe3JSON["payload_available"] = "online";
+    probe3JSON["payload_not_available"] = "offline";
+    serializeJson(probe3JSON,p3Payload);
 
-  DynamicJsonDocument probe3JSON(1024);
-  probe3JSON["device"] = deviceObj;
-  probe3JSON["name"] = "igrill_"+iGrillMac+" Probe 3";
-  probe3JSON["device_class"] = "temperature"; 
-  probe3JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe3";
-  probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3";
-  if(USE_METRIC_DEGREES)
-    probe3JSON["unit_of_measurement"] = "°C";
-  else
-    probe3JSON["unit_of_measurement"] = "°F";    
-  probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-  probe3JSON["payload_available"] = "online";
-  probe3JSON["payload_not_available"] = "offline";
-  serializeJson(probe3JSON,p3Payload);
-
-  DynamicJsonDocument probe4JSON(1024);
-  probe4JSON["device"] = deviceObj;
-  probe4JSON["name"] = "igrill_"+iGrillMac+" Probe 4";
-  probe4JSON["device_class"] = "temperature"; 
-  probe4JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe4";
-  probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4";
-  if(USE_METRIC_DEGREES)
-    probe4JSON["unit_of_measurement"] = "°C";
-  else
-    probe4JSON["unit_of_measurement"] = "°F"; 
-  probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-  probe4JSON["payload_available"] = "online";
-  probe4JSON["payload_not_available"] = "offline";
-  serializeJson(probe4JSON,p4Payload);
+    DynamicJsonDocument probe4JSON(1024);
+    probe4JSON["device"] = deviceObj;
+    probe4JSON["name"] = "igrill_"+iGrillMac+" Probe 4";
+    probe4JSON["device_class"] = "temperature"; 
+    probe4JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe4";
+    probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4";
+    if(USE_METRIC_DEGREES)
+      probe4JSON["unit_of_measurement"] = "°C";
+    else
+      probe4JSON["unit_of_measurement"] = "°F"; 
+    probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+    probe4JSON["payload_available"] = "online";
+    probe4JSON["payload_not_available"] = "offline";
+    serializeJson(probe4JSON,p4Payload);
+  }
 
   if(mqtt_client)
   {
@@ -1081,15 +1087,18 @@ void mqttAnnounce()
       String probe1ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_1/config";
       mqtt_client->publish(probe1ConfigTopic.c_str(),p1Payload.c_str(),true);
       delay(100);
-      String probe2ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2/config";
-      mqtt_client->publish(probe2ConfigTopic.c_str(),p2Payload.c_str(),true);
-      delay(100);
-      String probe3ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3/config";
-      mqtt_client->publish(probe3ConfigTopic.c_str(),p3Payload.c_str(),true);
-      delay(100);
-      String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4/config";
-      mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str(),true);
-      delay(100);
+      if(iGrillModel != "iGrill_mini")
+      {
+        String probe2ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2/config";
+        mqtt_client->publish(probe2ConfigTopic.c_str(),p2Payload.c_str(),true);
+        delay(100);
+        String probe3ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3/config";
+        mqtt_client->publish(probe3ConfigTopic.c_str(),p3Payload.c_str(),true);
+        delay(100);
+        String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4/config";
+        mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str(),true);
+        delay(100);
+      }
       //We need to publish a status of online each time we reach here otherwise probes plugged in after the initial mqtt discovery
       //will show as offline/unavailable until they see a new online announcement
       String availTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/status";
