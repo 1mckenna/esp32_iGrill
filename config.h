@@ -39,6 +39,7 @@
 #define MQTT_USERNAME            "mqtt"
 #define MQTT_PASSWORD            "password"
 #define MQTT_BASETOPIC           "igrill" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
+#define MQTT_RETAIN_TEMP         false //If you want the temperature sensor value to be retained in MQTT. (default: false)
 
 
 // Labels and max field lengths MQTT Custom parameters used in the JSON File Created From The Configuration Portal Data

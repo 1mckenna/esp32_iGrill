@@ -965,9 +965,19 @@ void publishProbeTemp(int probeNum, int temp)
     {
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+ String(probeNum);
       if(temp == -100) //If probe unplugged
-        mqtt_client->publish(topic.c_str(),"");
+      {
+        if(MQTT_RETAIN_TEMP)
+          mqtt_client->publish(topic.c_str(),"",true);            
+        else
+          mqtt_client->publish(topic.c_str(),"");
+      }
       else
-        mqtt_client->publish(topic.c_str(),String(temp).c_str());
+      {
+        if(MQTT_RETAIN_TEMP)
+          mqtt_client->publish(topic.c_str(),String(temp).c_str(),true);
+        else
+          mqtt_client->publish(topic.c_str(),String(temp).c_str());
+      }
     }
   }
   else
