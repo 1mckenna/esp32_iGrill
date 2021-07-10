@@ -80,6 +80,13 @@ If you have not yet completed the Arduino IDE setup steps or have chosen to skip
     * `cd ~/Ardunio`
 2. Clone this repo
     * `git clone https://github.com/1mckenna/esp32_iGrill.git`
+3. Make any [Advanced Configuration Changes](#advanced-configuration-changes)
+
+## Advanced Configruation Changes
+Below are the list of support advanced configuration changes that can be made by modifying the config.h file before flashing the device.
+| **Setting Name** | **Default Value** | **Description**
+| :--------------------: | :--------------------: |:--------------------: |
+|  MQTT_RETAIN_TEMP | false | Set to true if you want the temperature sensor value to be retained in MQTT. |
 
 ## Open and Flash the Project
 1. Open the Ardunio IDE
