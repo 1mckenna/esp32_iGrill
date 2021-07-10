@@ -1033,10 +1033,13 @@ void mqttAnnounce()
   if(USE_METRIC_DEGREES)
     probe1JSON["unit_of_measurement"] = "°C";
   else
-    probe1JSON["unit_of_measurement"] = "°F"; 
-  probe1JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-  probe1JSON["payload_available"] = "online";
-  probe1JSON["payload_not_available"] = "offline";
+    probe1JSON["unit_of_measurement"] = "°F";
+  if(!MQTT_RETAIN_TEMP)
+  { 
+    probe1JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+    probe1JSON["payload_available"] = "online";
+    probe1JSON["payload_not_available"] = "offline";
+  }
   serializeJson(probe1JSON,p1Payload);
   
   if(iGrillModel != "iGrill_mini")
@@ -1051,9 +1054,12 @@ void mqttAnnounce()
       probe2JSON["unit_of_measurement"] = "°C";
     else
       probe2JSON["unit_of_measurement"] = "°F"; 
-    probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-    probe2JSON["payload_available"] = "online";
-    probe2JSON["payload_not_available"] = "offline";
+    if(!MQTT_RETAIN_TEMP)
+    { 
+      probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+      probe2JSON["payload_available"] = "online";
+      probe2JSON["payload_not_available"] = "offline";
+    }
     serializeJson(probe2JSON,p2Payload);
 
     DynamicJsonDocument probe3JSON(1024);
@@ -1065,10 +1071,13 @@ void mqttAnnounce()
     if(USE_METRIC_DEGREES)
       probe3JSON["unit_of_measurement"] = "°C";
     else
-      probe3JSON["unit_of_measurement"] = "°F";    
-    probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-    probe3JSON["payload_available"] = "online";
-    probe3JSON["payload_not_available"] = "offline";
+      probe3JSON["unit_of_measurement"] = "°F";
+    if(!MQTT_RETAIN_TEMP)
+    {     
+      probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+      probe3JSON["payload_available"] = "online";
+      probe3JSON["payload_not_available"] = "offline";
+    }
     serializeJson(probe3JSON,p3Payload);
 
     DynamicJsonDocument probe4JSON(1024);
@@ -1081,9 +1090,12 @@ void mqttAnnounce()
       probe4JSON["unit_of_measurement"] = "°C";
     else
       probe4JSON["unit_of_measurement"] = "°F"; 
-    probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-    probe4JSON["payload_available"] = "online";
-    probe4JSON["payload_not_available"] = "offline";
+    if(!MQTT_RETAIN_TEMP)
+    { 
+      probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
+      probe4JSON["payload_available"] = "online";
+      probe4JSON["payload_not_available"] = "offline";
+    }
     serializeJson(probe4JSON,p4Payload);
   }
 
