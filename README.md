@@ -245,3 +245,4 @@ If you are running into an issue and want to increase the verbosity of the loggi
  * [beed2112](https://github.com/beed2112) &#8594;  MQTT Design Consult / Massive Amounts of Testing
  * [dev-strom](https://github.com/dev-strom) &#8594; [Bug Fixes / Addition of option to disable MultiWifi ](https://github.com/1mckenna/esp32_iGrill/issues/3)
  * [jysaloma](https://github.com/jysaloma) &#8594;  [iGrill Mini Support Testing](https://github.com/1mckenna/esp32_iGrill/issues/6)
+ * [Bluhme1](https://github.com/Bluhme1) &#8594; [MQTT_TEMP_RETAIN Enhancement Request/Testing](https://github.com/1mckenna/esp32_iGrill/issues/8)
