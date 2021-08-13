@@ -285,7 +285,7 @@ class MyClientCallback : public BLEClientCallbacks
     iGrillAuthService = nullptr;
     iGrillService = nullptr;
     iGrillBattService = nullptr;
-    
+    has_propane_sensor=false
     deviceStr =""; //Reset the Device String used for MQTT publishing
     iGrillMac=""; //Reset the iGrillMac String used for MQTT publishing
     iGrillModel=""; //Reset the iGrillModel String used for MQTT publishing
