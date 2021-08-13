@@ -157,6 +157,7 @@ static BLEUUID PROBE3_TEMPERATURE("06ef0006-2e06-4b79-9e33-fce2c42805ec"); //iGr
 static BLEUUID PROBE3_THRESHOLD("06ef0007-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe3 Notification Threshhold (NOT IMPLEMENTED)
 static BLEUUID PROBE4_TEMPERATURE("06ef0008-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Temperature
 static BLEUUID PROBE4_THRESHOLD("06ef0009-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Notification Threshhold (NOT IMPLEMENTED)
+static BLEUUID PROPANE_LEVEL_SENSOR("f5d40001-3548-4c22-9947-f3673fce3cd9"); //iGrill v3 Propane sensor
 
 static bool doConnect = false; //bool for determining if an iGrill Device has been found
 static bool connected = false; //bool for determining if we are connected and Authenticated to an iGrill Device
@@ -169,6 +170,7 @@ static BLERemoteCharacteristic* probe1TempCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe2TempCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe3TempCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe4TempCharacteristic = nullptr;
+static BLERemoteCharacteristic* propanelevelCharacteristic = nullptr;
 
 static BLERemoteService* iGrillAuthService = nullptr; //iGrill BLE Service used for authenticating to the device (Needed to read probe values)
 static BLERemoteService* iGrillService = nullptr; //iGrill BLE Service used for reading probes
@@ -178,6 +180,7 @@ static BLEAdvertisedDevice* myDevice;
 static String deviceStr ="";
 static String iGrillMac="";
 static String iGrillModel="";
+static bool has_propane_sensor=false;
 
 #define DELETE(ptr) { if (ptr != nullptr) {delete ptr; ptr = nullptr;} }
 #pragma endregion
@@ -247,6 +250,13 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     IGRILLLOGGER(" %% Battery Level: " + String(pData[0]) + "%% ",2);
     publishBattery(pData[0]);
   }
+  else if(PROPANE_LEVEL_SENSOR.equals(pBLERemoteCharacteristic->getUUID()))
+  {
+    //WE RECIEVED A NEW PROPANE LEVEL EVENT
+    IGRILLLOGGER(" %% Propane Level: " + String(pData[0]*25) + "%% ",2);
+    publishPropaneLevel(pData[0]*25);
+  }
+
 }
 
 class MyClientCallback : public BLEClientCallbacks 
@@ -271,6 +281,7 @@ class MyClientCallback : public BLEClientCallbacks
     probe2TempCharacteristic = nullptr;
     probe3TempCharacteristic = nullptr;
     probe4TempCharacteristic = nullptr;
+    propanelevelCharacteristic = nullptr;
     iGrillAuthService = nullptr;
     iGrillService = nullptr;
     iGrillBattService = nullptr;
@@ -324,6 +335,23 @@ void setupProbes()
           {
             probe4TempCharacteristic->registerForNotify(notifyCallback);
             IGRILLLOGGER("  -- Probe 4 Setup!",1);
+          }
+        }
+        if(iGrillModel == "iGrillv3")
+        {
+          //Try to get propane level sensor characteristic
+          propanelevelCharacteristic = iGrillService->getCharacteristic(PROPANE_LEVEL_SENSOR);
+          if(propanelevelCharacteristic)
+          {
+            has_propane_sensor = true;
+            propanelevelCharacteristic->registerForNotify(notifyCallback);
+            IGRILLLOGGER("  -- Propane Level Sensor Setup!",1);
+            if (propanelevelCharacteristic->canRead())
+            {
+              uint8_t value = propanelevelCharacteristic->readUInt8();
+              IGRILLLOGGER(" %% Propane Level: " + String(value*25) + "%", 2);
+              publishPropaneLevel(value);
+            }
           }
         }
       }
@@ -507,6 +535,7 @@ bool connectToServer()
         else if(iGrillModel == "iGrillv3")
         {
           iGrillService = iGrillClient->getService(V3_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
+
         }
         delay(1*1000);
         iGrillBattService = iGrillClient->getService(BATTERY_SERVICE_UUID); //Obtain a reference for the iGrill Battery Service that we use for Getting the Battery Level
@@ -1003,10 +1032,27 @@ void publishBattery(int battPercent)
   }
 }
 
+void publishPropaneLevel(int propanePercent)
+{
+  if(mqtt_client)
+  {
+    if(mqtt_client->connected())
+    {
+      String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/propane_level";
+      mqtt_client->publish(topic.c_str(),String(propanePercent).c_str(),true);
+    }
+  }
+  else
+  {
+    connectMQTT();
+  }
+}
+
 //Publish MQTT Configuration Topics used by MQTT Auto Discovery
 void mqttAnnounce()
 {
   String battPayload ="";
+  String propanePayload="";
   String p1Payload = "";
   String p2Payload = "";
   String p3Payload = "";
@@ -1023,6 +1069,17 @@ void mqttAnnounce()
   battJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/battery_level";
   battJSON["unit_of_measurement"] = "%";
   serializeJson(battJSON,battPayload);
+
+  if(has_propane_sensor)
+  {
+    DynamicJsonDocument proplvlJSON(1024);
+    proplvlJSON["device"] = deviceObj;
+    proplvlJSON["name"] = "igrill_"+iGrillMac+" Propane Level";
+    proplvlJSON["unique_id"]   = "igrill_"+iGrillMac+"_prop";
+    proplvlJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level";
+    proplvlJSON["unit_of_measurement"] = "%";
+    serializeJson(proplvlJSON,propanePayload);    
+  }
 
   DynamicJsonDocument probe1JSON(1024);
   probe1JSON["device"] = deviceObj;
@@ -1120,6 +1177,12 @@ void mqttAnnounce()
         String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4/config";
         mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str(),true);
         delay(100);
+        if(has_propane_sensor)
+        {
+          String propaneLevelConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level";
+          mqtt_client->publish(propaneLevelConfigTopic.c_str(),propanePayload.c_str(),true);
+          delay(100);
+        }
       }
       //We need to publish a status of online each time we reach here otherwise probes plugged in after the initial mqtt discovery
       //will show as offline/unavailable until they see a new online announcement
