@@ -969,6 +969,7 @@ void publishSystemInfo()
       sysinfoJSON["Network"] = WiFi.SSID();
       sysinfoJSON["Signal Strength"] = String(WiFi.RSSI());
       sysinfoJSON["IP Address"] = WiFi.localIP().toString();
+      sysinfoJSON["Propane Sensor"] = String(has_propane_sensor);
       serializeJson(sysinfoJSON,payload);
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/systeminfo";
       mqtt_client->publish(topic.c_str(),payload.c_str());
