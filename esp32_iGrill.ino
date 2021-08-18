@@ -157,6 +157,7 @@ static BLEUUID PROBE3_TEMPERATURE("06ef0006-2e06-4b79-9e33-fce2c42805ec"); //iGr
 static BLEUUID PROBE3_THRESHOLD("06ef0007-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe3 Notification Threshhold (NOT IMPLEMENTED)
 static BLEUUID PROBE4_TEMPERATURE("06ef0008-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Temperature
 static BLEUUID PROBE4_THRESHOLD("06ef0009-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Notification Threshhold (NOT IMPLEMENTED)
+static BLEUUID PROPANE_SERVICE("f5d40001-3548-4c22-9947-f3673fce3cd9");//iGrill v3 Propane Service
 static BLEUUID PROPANE_LEVEL_SENSOR("f5d40001-3548-4c22-9947-f3673fce3cd9"); //iGrill v3 Propane sensor
 
 static bool doConnect = false; //bool for determining if an iGrill Device has been found
@@ -175,6 +176,7 @@ static BLERemoteCharacteristic* propanelevelCharacteristic = nullptr;
 static BLERemoteService* iGrillAuthService = nullptr; //iGrill BLE Service used for authenticating to the device (Needed to read probe values)
 static BLERemoteService* iGrillService = nullptr; //iGrill BLE Service used for reading probes
 static BLERemoteService* iGrillBattService = nullptr; //iGrill BLE Service used to read battery level
+static BLERemoteService* iGrillPropaneService = nullptr; //iGrill BLE Service used to read propane level from iGrillv3 devices
 
 static BLEAdvertisedDevice* myDevice;
 static String deviceStr ="";
@@ -285,6 +287,7 @@ class MyClientCallback : public BLEClientCallbacks
     iGrillAuthService = nullptr;
     iGrillService = nullptr;
     iGrillBattService = nullptr;
+    iGrillPropaneService = nullptr;
     has_propane_sensor=false;
     deviceStr =""; //Reset the Device String used for MQTT publishing
     iGrillMac=""; //Reset the iGrillMac String used for MQTT publishing
@@ -337,23 +340,6 @@ void setupProbes()
             IGRILLLOGGER("  -- Probe 4 Setup!",1);
           }
         }
-        if(iGrillModel == "iGrillv3")
-        {
-          //Try to get propane level sensor characteristic
-          propanelevelCharacteristic = iGrillService->getCharacteristic(PROPANE_LEVEL_SENSOR);
-          if(propanelevelCharacteristic)
-          {
-            has_propane_sensor = true;
-            propanelevelCharacteristic->registerForNotify(notifyCallback);
-            IGRILLLOGGER("  -- Propane Level Sensor Setup!",1);
-            if (propanelevelCharacteristic->canRead())
-            {
-              uint8_t value = propanelevelCharacteristic->readUInt8();
-              IGRILLLOGGER(" %% Propane Level: " + String(value*25) + "%", 2);
-              publishPropaneLevel(value);
-            }
-          }
-        }
       }
       catch(...)
       {
@@ -379,6 +365,42 @@ void getiGrillInfo()
     iGrillClient->disconnect();
   }
 }
+
+//Register Callback for iGrill Device Propane Level
+bool setupPropaneCharacteristic()
+{
+  IGRILLLOGGER(" - Setting up Propane Level Characteristic...",1);
+  try
+  {
+    propanelevelCharacteristic = iGrillPropaneService->getCharacteristic(PROPANE_LEVEL_SENSOR);
+    if (propanelevelCharacteristic == nullptr)
+    {
+      IGRILLLOGGER(" - Setting up Propane Level Characteristic Failed!", 1);
+      iGrillClient->disconnect();
+      return false;
+    }
+    if (propanelevelCharacteristic->canNotify())
+    {
+      propanelevelCharacteristic->registerForNotify(notifyCallback);
+      IGRILLLOGGER("  -- Propane Level Setup!",1);
+    }
+    if (propanelevelCharacteristic->canRead())
+    {
+      uint8_t value = propanelevelCharacteristic->readUInt8();
+      IGRILLLOGGER(" %% Propane Level: " + String(value*25) + "%", 2);
+      publishPropaneLevel(value);
+    }
+    return true;
+  }
+  catch(...)
+  {
+    IGRILLLOGGER(" - Setting up Propane Level Characteristic Failed!", 1);
+    iGrillClient->disconnect();
+    return false;
+  }
+
+}
+
 
 //Register Callback for iGrill Device Battery Level
 bool setupBatteryCharacteristic()
@@ -453,6 +475,7 @@ static MySecurity oMySecurity;
           ** Since our first 8 bytes are 0, we dont need to do any crypto operations. We can just hand back the same encrypted value we get and we're authenticated.**
  - Sets up iGrillService (Needed to read probe temps)
  - Sets up iGrillBattService (Needed to read Battery Level)
+ - Sets up iGrillPropaneService (Needed to read Propane Level from v3 Devices)
 */
 bool connectToServer() 
 {
@@ -535,7 +558,8 @@ bool connectToServer()
         else if(iGrillModel == "iGrillv3")
         {
           iGrillService = iGrillClient->getService(V3_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
-
+          if(has_propane_sensor)
+            iGrillPropaneService = iGrillClient->getService(PROPANE_SERVICE); //Obtain a reference for the iGrill Propane Service that we use for Propane Level
         }
         delay(1*1000);
         iGrillBattService = iGrillClient->getService(BATTERY_SERVICE_UUID); //Obtain a reference for the iGrill Battery Service that we use for Getting the Battery Level
@@ -589,6 +613,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
       DELETE(myDevice); // delete old stuff (don't need it anymore)
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       iGrillModel = "iGrillv3";
+      if(myDevice->isAdvertisingService(PROPANE_SERVICE))
+        has_propane_sensor = true;
       doConnect = true;
     }
   }
@@ -1513,6 +1539,8 @@ void loop()
       getiGrillInfo(); //Get and Publish to MQTT Firmware Information for iGrill Device
       setupBatteryCharacteristic(); //Setup Callbacks to get iGrill Battery Level
       setupProbes(); //Setup Callbacks to get iGrill Probe Temperatures
+      if(has_propane_sensor)
+        setupPropaneCharacteristic(); //Setup Callbacks to get iGrill Propane Level
     }
     doConnect = false; //Resetting doConnect flag
   }
