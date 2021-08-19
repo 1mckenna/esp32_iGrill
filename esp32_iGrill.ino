@@ -157,7 +157,7 @@ static BLEUUID PROBE3_TEMPERATURE("06ef0006-2e06-4b79-9e33-fce2c42805ec"); //iGr
 static BLEUUID PROBE3_THRESHOLD("06ef0007-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe3 Notification Threshhold (NOT IMPLEMENTED)
 static BLEUUID PROBE4_TEMPERATURE("06ef0008-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Temperature
 static BLEUUID PROBE4_THRESHOLD("06ef0009-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe4 Notification Threshhold (NOT IMPLEMENTED)
-static BLEUUID PROPANE_SERVICE("f5d40001-3548-4c22-9947-f3673fce3cd9");//iGrill v3 Propane Service
+static BLEUUID PROPANE_SERVICE("f5d40000-3548-4c22-9947-f3673fce3cd9");//iGrill v3 Propane Service
 static BLEUUID PROPANE_LEVEL_SENSOR("f5d40001-3548-4c22-9947-f3673fce3cd9"); //iGrill v3 Propane sensor
 
 static bool doConnect = false; //bool for determining if an iGrill Device has been found
