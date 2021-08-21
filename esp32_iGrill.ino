@@ -558,8 +558,17 @@ bool connectToServer()
         else if(iGrillModel == "iGrillv3")
         {
           iGrillService = iGrillClient->getService(V3_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
-          if(has_propane_sensor)
-            iGrillPropaneService = iGrillClient->getService(PROPANE_SERVICE); //Obtain a reference for the iGrill Propane Service that we use for Propane Level
+          delay(1*1000);
+          iGrillPropaneService = iGrillClient->getService(PROPANE_SERVICE); //Obtain a reference for the iGrill Propane Service that we use for Propane Level
+          if(iGrillPropaneService == nullptr)
+          {
+            IGRILLLOGGER(" - Unable to Setup Propane Level Service (iGrillPropaneService is null)",2);
+          }
+          else
+          {
+            IGRILLLOGGER(" - Propane Level Service Setup!",1);
+            has_propane_sensor = true;
+          }
         }
         delay(1*1000);
         iGrillBattService = iGrillClient->getService(BATTERY_SERVICE_UUID); //Obtain a reference for the iGrill Battery Service that we use for Getting the Battery Level
@@ -609,12 +618,11 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
     }
     else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(V3_SERVICE_UUID)) 
     {
+      IGRILLLOGGER(" - iGrillv3 device discovered",2);
       BLEDevice::getScan()->stop();
       DELETE(myDevice); // delete old stuff (don't need it anymore)
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       iGrillModel = "iGrillv3";
-      if(myDevice->isAdvertisingService(PROPANE_SERVICE))
-        has_propane_sensor = true;
       doConnect = true;
     }
   }
