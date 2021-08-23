@@ -1003,7 +1003,6 @@ void publishSystemInfo()
       sysinfoJSON["Network"] = WiFi.SSID();
       sysinfoJSON["Signal Strength"] = String(WiFi.RSSI());
       sysinfoJSON["IP Address"] = WiFi.localIP().toString();
-      sysinfoJSON["Propane Sensor"] = String(has_propane_sensor);
       serializeJson(sysinfoJSON,payload);
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/systeminfo";
       mqtt_client->publish(topic.c_str(),payload.c_str());
@@ -1214,7 +1213,7 @@ void mqttAnnounce()
         delay(100);
         if(has_propane_sensor)
         {
-          String propaneLevelConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level";
+          String propaneLevelConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level/config";
           mqtt_client->publish(propaneLevelConfigTopic.c_str(),propanePayload.c_str(),true);
           delay(100);
         }

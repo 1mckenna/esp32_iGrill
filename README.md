@@ -82,12 +82,6 @@ If you have not yet completed the Arduino IDE setup steps or have chosen to skip
     * `git clone https://github.com/1mckenna/esp32_iGrill.git`
 3. Make any [Advanced Configuration Changes](#advanced-configuration-changes)
 
-## Advanced Configruation Changes
-Below are the list of support advanced configuration changes that can be made by modifying the config.h file before flashing the device.
-| **Setting Name** | **Default Value** | **Description**
-| :--------------------: | :--------------------: |:--------------------: |
-|  MQTT_RETAIN_TEMP | false | Set to true if you want the temperature sensor value to be retained in MQTT. |
-
 ## Open and Flash the Project
 1. Open the Ardunio IDE
 2. Open the esp32_iGrill Sketch</br>
@@ -187,21 +181,25 @@ All the configs needed to setup the dashboard have been placed in the ha_example
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3 | Temperature Value of Probe 3 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4 | Temperature Value of Probe 4 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level | Battery Level of the iGrill Device |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/propane_level | Propane Level of the iGrill Device (v3 only)|
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1/config | MQTT Autoconfiguration Settings for Probe 1 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2/config | MQTT Autoconfiguration Settings for Probe 2 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3/config | MQTT Autoconfiguration Settings for Probe 3 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4/config | MQTT Autoconfiguration Settings for Probe 4 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level/config | MQTT Autoconfiguration Settings for Battery Level |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/propane_level/config | MQTT Autoconfiguration Settings for Propane Level (v3 only)|
 
 ## MQTT Retained Topics
-We only set the retain flag on the following topics
-  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level  <b><i>(We set the retain flag on this so we know the level of the iGrill battery the last time the device was seen)</b></i>
+By default we only set the retain flag on the below topics as you may want to know their status while the iGrill is not in use.
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level
+  * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/propane_level (**iGrillv3 Only**)
   * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/battery_level/config
   * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1/config
   * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2/config
   * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3/config
   * MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_4/config
 
+Optionally, if you wish to also retain the last seen temperature value as well you can do this via setting `MQTT_RETAIN_TEMP true` in your config.h.
 
 # Troubleshooting
 ## Common Issues
@@ -220,7 +218,7 @@ If you are running into an issue and want to increase the verbosity of the loggi
   * `IGRILL_DEBUG_LVL` <i>(Default: 1)</i>
     * Level 0: Print only Basic Info
     * Level 1: Level 0 + Print BLE Connection Info (Default)
-    * Level 2: Level 1 + Print everything including temp/batt callbacks (Only Recommended for troubleshooting BLE issues)
+    * Level 2: Level 1 + Print everything including temp/batt/propane callbacks (Only Recommended for troubleshooting BLE issues)
 
 # iGrill Client Development Status
 
@@ -228,7 +226,7 @@ If you are running into an issue and want to increase the verbosity of the loggi
 * AutoDiscover iGrill Devices
 * Support for iGrill_mini
 * Support for iGrillv2
-* Support for iGrillv3
+* Support for iGrillv3 (NEW: Propane Level Sensor Support)
 * Connect and Authenticate to the iGrill Device
 * Read iGrill Device Firmware Version
 * Read Battery Level
@@ -246,3 +244,4 @@ If you are running into an issue and want to increase the verbosity of the loggi
  * [dev-strom](https://github.com/dev-strom) &#8594; [Bug Fixes / Addition of option to disable MultiWifi ](https://github.com/1mckenna/esp32_iGrill/issues/3)
  * [jysaloma](https://github.com/jysaloma) &#8594;  [iGrill Mini Support Testing](https://github.com/1mckenna/esp32_iGrill/issues/6)
  * [Bluhme1](https://github.com/Bluhme1) &#8594; [MQTT_TEMP_RETAIN Enhancement Request/Testing](https://github.com/1mckenna/esp32_iGrill/issues/8)
+ * [eth0up](https://github.com/eth0up) &#8594; [iGrillv3 Propane Level Enhancement Request/Testing](https://github.com/1mckenna/esp32_iGrill/issues/9)
