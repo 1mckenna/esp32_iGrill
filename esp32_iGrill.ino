@@ -388,7 +388,7 @@ bool setupPropaneCharacteristic()
     {
       uint8_t value = propanelevelCharacteristic->readUInt8();
       IGRILLLOGGER(" %% Propane Level: " + String(value*25) + "%", 2);
-      publishPropaneLevel(value);
+      publishPropaneLevel(value*25);
     }
     return true;
   }
