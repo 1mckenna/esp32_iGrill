@@ -148,6 +148,7 @@ static BLEUUID DEVICE_RESPONSE("64ac0004-4a4b-4b58-9f37-94d3c52ffdf7"); //iGrill
 
 static BLEUUID MINI_SERVICE_UUID("63C70000-4A82-4261-95FF-92CF32477861"); //iGrill mini Service
 static BLEUUID SERVICE_UUID("A5C50000-F186-4BD6-97F2-7EBACBA0D708"); //iGrillv2 Service
+static BLEUUID V202_SERVICE_UUID("ADA7590F-2E6D-469E-8F7B-1822B386A5E9"); //iGrillv202 Service
 static BLEUUID V3_SERVICE_UUID("6E910000-58DC-41C7-943F-518B278CEA88"); //iGrillv3 Service
 static BLEUUID PROBE1_TEMPERATURE("06EF0002-2E06-4B79-9E33-FCE2C42805EC"); //iGrill BLE Characteristic for Probe1 Temperature
 static BLEUUID PROBE1_THRESHOLD("06ef0003-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe1 Notification Threshhold (NOT IMPLEMENTED)
@@ -555,6 +556,10 @@ bool connectToServer()
         {
           iGrillService = iGrillClient->getService(SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
         }
+        else if(iGrillModel == "iGrillv202")
+        {
+          iGrillService = iGrillClient->getService(V202_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
+        }
         else if(iGrillModel == "iGrillv3")
         {
           iGrillService = iGrillClient->getService(V3_SERVICE_UUID); //Obtain a reference for the Main iGrill Service that we use for Temp Probes
@@ -614,6 +619,14 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
       DELETE(myDevice); // delete old stuff (don't need it anymore)
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       iGrillModel = "iGrillv2";
+      doConnect = true;
+    }
+    else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(V202_SERVICE_UUID))
+    {
+      BLEDevice::getScan()->stop();
+      DELETE(myDevice); // delete old stuff (don't need it anymore)
+      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+      iGrillModel = "iGrillv202";
       doConnect = true;
     }
     else if(advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(V3_SERVICE_UUID)) 
