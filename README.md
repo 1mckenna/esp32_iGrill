@@ -1,5 +1,5 @@
 # ESP32_iGrill
-ESP32 BLE Client for the Weber iGrill_mini, iGrillv2, and iGrillv3 Devices
+ESP32 BLE Client for the Weber iGrill_mini, iGrillv2, iGrillv202 and iGrillv3 Devices
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
@@ -226,6 +226,7 @@ If you are running into an issue and want to increase the verbosity of the loggi
 * AutoDiscover iGrill Devices
 * Support for iGrill_mini
 * Support for iGrillv2
+* Support for iGrillv202 (Newer iGrillv2 Model)
 * Support for iGrillv3 (NEW: Propane Level Sensor Support)
 * Connect and Authenticate to the iGrill Device
 * Read iGrill Device Firmware Version
@@ -245,3 +246,4 @@ If you are running into an issue and want to increase the verbosity of the loggi
  * [jysaloma](https://github.com/jysaloma) &#8594;  [iGrill Mini Support Testing](https://github.com/1mckenna/esp32_iGrill/issues/6)
  * [Bluhme1](https://github.com/Bluhme1) &#8594; [MQTT_TEMP_RETAIN Enhancement Request/Testing](https://github.com/1mckenna/esp32_iGrill/issues/8)
  * [eth0up](https://github.com/eth0up) &#8594; [iGrillv3 Propane Level Enhancement Request/Testing](https://github.com/1mckenna/esp32_iGrill/issues/9)
+ * [mwolter805](https://github.com/mwolter805) &#8594; [iGrillv202 Model Support Testng](https://github.com/1mckenna/esp32_iGrill/issues/12)
