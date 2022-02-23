@@ -63,7 +63,7 @@ We need to change from the default parition scheme, becuase we utilize both Wifi
 2. Click <b>Tools &#8594; Manage Libraries...</b>
 ![open_libmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_libmanager.png?raw=true)
 3. Search for and install the following libraries
-    * ArdunioJson
+    * ArduinoJson
     ![arduniojson](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_arduinojson.png?raw=true)
     * PubSubClient
     ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_pubsubclient.png?raw=true)
