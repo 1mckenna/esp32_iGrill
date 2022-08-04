@@ -46,7 +46,7 @@ This will connect to an iGrill deivce and then publish the temperatures of the p
 ![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_boardmanager.png?raw=true)
 6. In the Boards Manager Dialog Window Search for <b>esp32</b>
 7. After a few seconds you should see esp32 by Espressif Systems
-8. Select the version you want to install (tested with 1.0.5-rc6)
+8. Select the version you want to install (tested with 2.0.4)
 9. Click Install
 ![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_boardmanager.png?raw=true)
 
@@ -63,14 +63,13 @@ We need to change from the default parition scheme, becuase we utilize both Wifi
 2. Click <b>Tools &#8594; Manage Libraries...</b>
 ![open_libmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_libmanager.png?raw=true)
 3. Search for and install the following libraries
-    * ArduinoJson
+    * ArdunioJson (tested with 6.19.4)
     ![arduniojson](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_arduinojson.png?raw=true)
     * PubSubClient
     ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_pubsubclient.png?raw=true)
-    * ESP_WifiManager
+    * ESP_WifiManager (tested with 1.10.2)
     ![esp_wifimanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr.png?raw=true)
-    * ESP_DoubleResetDetector (you will be prompted to install automatically)
-    * LittleFS_esp32 (you will be prompted to install automatically)
+    * ESP_DoubleResetDetector (tested with 1.10.2)
     ![esp_wifimanager_deps](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr_deps.png?raw=true)
 
 # Clone and Flash

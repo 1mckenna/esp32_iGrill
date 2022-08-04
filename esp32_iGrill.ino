@@ -31,8 +31,9 @@ Wifi MQTT handling based on the example provided by the ESP_WifiManager Library 
 WiFiMulti wifiMulti;
 #include <ESP_WiFiManager.h> //https://github.com/khoih-prog/ESP_WiFiManager
 #include <BLEDevice.h>
-#include <LITTLEFS.h> // https://github.com/lorol/LITTLEFS
-FS* filesystem = &LITTLEFS;
+
+#include <LittleFS.h>       // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
+FS* filesystem = &LittleFS;
 
 const int BUTTON_PIN  = 27;
 const int RED_LED     = 26;
