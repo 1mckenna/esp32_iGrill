@@ -206,7 +206,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     {
       short t = (pData[1] << 8) | pData[0];
       if (USE_METRIC_DEGREES)
-        t=(t-32)/1.8; // if metrical, convert to celsius
+        t=round((t-32)/1.8); // if metrical, convert to celsius
       IGRILLLOGGER(" * Probe 1 Temp: " + String(t), 2);
       publishProbeTemp(1, t);
     }
@@ -222,7 +222,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     {
       short t = (pData[1] << 8) | pData[0];
       if (USE_METRIC_DEGREES)
-        t=(t-32)/1.8; // if metrical, convert to celsius
+        t=round((t-32)/1.8); // if metrical, convert to celsius
       IGRILLLOGGER(" * Probe 2 Temp: " + String(t), 2);
       publishProbeTemp(2, t);
     }
@@ -238,7 +238,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     {
       short t = (pData[1] << 8) | pData[0];
       if (USE_METRIC_DEGREES)
-        t=(t-32)/1.8; // if metrical, convert to celsius
+        t=round((t-32)/1.8); // if metrical, convert to celsius
       IGRILLLOGGER(" * Probe 3 Temp: " + String(t), 2);
       publishProbeTemp(3, t);
     }
@@ -254,7 +254,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     {
       short t = (pData[1] << 8) | pData[0];
       if (USE_METRIC_DEGREES)
-        t=(t-32)/1.8; // if metrical, convert to celsius
+        t=round((t-32)/1.8); // if metrical, convert to celsius
       IGRILLLOGGER(" * Probe 4 Temp: " + String(t), 2);
       publishProbeTemp(4, t);
     }
