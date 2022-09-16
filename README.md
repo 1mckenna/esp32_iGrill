@@ -69,7 +69,7 @@ We need to change from the default parition scheme, becuase we utilize both Wifi
     ![pubsubclient](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_pubsubclient.png?raw=true)
     * ESP_WifiManager (tested with 1.10.2)
     ![esp_wifimanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr.png?raw=true)
-    * ESP_DoubleResetDetector (tested with 1.10.2)
+    * ESP_DoubleResetDetector (tested with 1.3.0)
     ![esp_wifimanager_deps](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_esp_wifimgr_deps.png?raw=true)
 
 # Clone and Flash
