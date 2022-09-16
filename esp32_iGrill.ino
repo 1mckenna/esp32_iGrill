@@ -153,6 +153,7 @@ static BLEUUID SERVICE_UUID("A5C50000-F186-4BD6-97F2-7EBACBA0D708"); //iGrillv2 
 static BLEUUID V202_SERVICE_UUID("ADA7590F-2E6D-469E-8F7B-1822B386A5E9"); //iGrillv202 Service
 static BLEUUID V3_SERVICE_UUID("6E910000-58DC-41C7-943F-518B278CEA88"); //iGrillv3 Service
 
+static BLEUUID IGRILL_TEMP_UNITS("06EF0001-2E06-4B79-9E33-FCE2C42805EC"); //iGrill BLE Characteristic for Setting Temperature Units    0=IMPERIAL 1=METRIC
 static BLEUUID PROBE1_TEMPERATURE("06EF0002-2E06-4B79-9E33-FCE2C42805EC"); //iGrill BLE Characteristic for Probe1 Temperature
 static BLEUUID PROBE1_THRESHOLD("06ef0003-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe1 Notification Threshhold (NOT IMPLEMENTED)
 static BLEUUID PROBE2_TEMPERATURE("06ef0004-2e06-4b79-9e33-fce2c42805ec"); //iGrill BLE Characteristic for Probe2 Temperature
@@ -171,6 +172,7 @@ static bool reScan = false; //bool for determining if we need to do a BLE Scan (
 static BLEClient*  iGrillClient = nullptr;
 static BLERemoteCharacteristic* authRemoteCharacteristic = nullptr;
 static BLERemoteCharacteristic* batteryCharacteristic = nullptr;
+static BLERemoteCharacteristic* deviceTempUnitsCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe1TempCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe2TempCharacteristic = nullptr;
 static BLERemoteCharacteristic* probe3TempCharacteristic = nullptr;
@@ -288,6 +290,7 @@ class MyClientCallback : public BLEClientCallbacks
     probe3TempCharacteristic = nullptr;
     probe4TempCharacteristic = nullptr;
     propanelevelCharacteristic = nullptr;
+    deviceTempUnitsCharacteristic = nullptr;
     iGrillAuthService = nullptr;
     iGrillService = nullptr;
     iGrillBattService = nullptr;
@@ -303,6 +306,61 @@ class MyClientCallback : public BLEClientCallbacks
 };
 
 static MyClientCallback oMyClientCallback;
+
+//Set iGrill Temperature Units to Match what has been selected in the Web Configuration Portal
+void setDeviceTemperatureUnits()
+{
+    uint8_t IMPERIAL_UNITS = 0;
+    uint8_t METRIC_UNITS = 1;
+    IGRILLLOGGER(" - Setting Device Temp Units...",1);
+    if (iGrillService == nullptr) 
+    {
+      IGRILLLOGGER(" - Setting Device Temp Units Failed!",1);
+      iGrillClient->disconnect();
+    }
+    else
+    {
+      try
+      {
+        deviceTempUnitsCharacteristic = iGrillService->getCharacteristic(IGRILL_TEMP_UNITS);
+        if (deviceTempUnitsCharacteristic == nullptr)
+        {
+          IGRILLLOGGER(" - Setting Device Temp Units Failed!", 1);
+          iGrillClient->disconnect();
+        }
+        if(USE_METRIC_DEGREES)
+        {
+          //SET IGRILL DEVICE TO METRIC UNITS          
+          if (deviceTempUnitsCharacteristic->canWrite())
+            deviceTempUnitsCharacteristic->writeValue(METRIC_UNITS, true);
+          else
+            IGRILLLOGGER(" - Cannot WRITE Device Temp Units!", 1);
+        }
+        else
+        {
+          //SET IGRILL DEVICE TO IMPERIAL UNITS
+          if (deviceTempUnitsCharacteristic->canWrite())
+            deviceTempUnitsCharacteristic->writeValue(IMPERIAL_UNITS, true);
+          else
+            IGRILLLOGGER(" - Cannot WRITE Device Temp Units!", 1);
+        }
+        delay(1*1000);
+        if (deviceTempUnitsCharacteristic->canRead())
+        {
+          uint8_t tempUnits = deviceTempUnitsCharacteristic->readUInt8();
+          if(tempUnits == 0)
+            IGRILLLOGGER("  ** Temperature Units: IMPERIAL", 1);
+          if(tempUnits == 1)
+            IGRILLLOGGER("  ** Temperature Units: METRIC", 1);            
+        }
+      }
+      catch(...)
+      {
+        IGRILLLOGGER(" - Setting Device Temp Units Failed!",1);
+        iGrillClient->disconnect();
+      }
+    }  
+}
 
 //Register Callback for iGrill Probes
 void setupProbes()
@@ -1573,6 +1631,7 @@ void loop()
     {
       getiGrillInfo(); //Get and Publish to MQTT Firmware Information for iGrill Device
       setupBatteryCharacteristic(); //Setup Callbacks to get iGrill Battery Level
+      setDeviceTemperatureUnits(); //Set iGrill Device Temperature Units to Match the selection in the Configutation Portal
       setupProbes(); //Setup Callbacks to get iGrill Probe Temperatures
       if(has_propane_sensor)
         setupPropaneCharacteristic(); //Setup Callbacks to get iGrill Propane Level
