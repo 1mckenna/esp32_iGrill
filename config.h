@@ -8,7 +8,7 @@
 // Level 0: Print only Basic Info (Default)
 // Level 1: Level 0 + Print BLE Connection Info
 // Level 2: Level 1 + Print everything including temp/batt/propane callbacks (Only Recommended for troubleshooting BLE issues)
-#define IGRILL_DEBUG_LVL 1
+#define IGRILL_DEBUG_LVL 0
 // Setup File System Information (Needed to Read and Store the JSON )
 #define FileFS        LITTLEFS
 #define FS_Name       "LittleFS"
@@ -38,7 +38,7 @@
 #define MQTT_SERVERPORT          "1883"
 #define MQTT_USERNAME            "mqtt"
 #define MQTT_PASSWORD            "password"
-#define MQTT_BASETOPIC           "igrill" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
+#define MQTT_BASETOPIC           "homeassistant" //If you are using Home Assistant you should set this to your discovery_prefix (default: homeassistant)
 #define MQTT_RETAIN_TEMP         false //Set to true if you want the temperature sensor value to be retained in MQTT. (default: false)
 
 
