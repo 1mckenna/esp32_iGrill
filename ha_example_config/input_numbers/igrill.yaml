@@ -1,4 +1,5 @@
  #SLIDERS FOR IGRILL ALERTS
+ input_number:
   igrill_alert_low:
     name: Grill Low Temp
     initial: 150
