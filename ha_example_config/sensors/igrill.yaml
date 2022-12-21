@@ -44,7 +44,6 @@ template:
           Normal
         {% endif %}
 
-
 mqtt:
   sensor:
     state_topic: "homeassistant/sensor/igrill_d481ca223348/status"
