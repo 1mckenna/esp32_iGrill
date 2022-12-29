@@ -2,37 +2,37 @@
  input_number:
   igrill_alert_low:
     name: Grill Low Temp
-    initial: 150
-    min: 100
-    max: 500
+    initial: 90
+    min: 40
+    max: 280
     step: 5
   igrill_alert_high:
     name: Grill High Temp
-    initial: 340
-    min: 100
-    max: 500
+    initial: 180
+    min: 6
+    max: 280
     step: 5
   igrill_probe_1_target:
     name: Probe 1 Target Temp
-    initial: 160
-    min: 60
-    max: 250
+    initial: 70
+    min: 6
+    max: 220
     step: 1
   igrill_probe_2_target:
     name: Probe 2 Target Temp
-    initial: 160
-    min: 60
-    max: 250
+    initial: 70
+    min: 6
+    max: 220
     step: 1
   igrill_probe_3_target:
     name: Probe 3 Target Temp
-    initial: 160
-    min: 60
-    max: 250
+    initial: 70
+    min: 6
+    max: 220
     step: 1
   igrill_probe_4_target:
     name: Probe 4 Target Temp
-    initial: 160
-    min: 60
-    max: 250
+    initial: 70
+    min: 6
+    max: 280
     step: 1
