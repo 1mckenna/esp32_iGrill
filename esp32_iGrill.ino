@@ -277,7 +277,7 @@ class MyClientCallback : public BLEClientCallbacks
   {
     IGRILLLOGGER(" - iGrill Disconnected!", 1);
     IGRILLLOGGER(" - Freeing Memory....", 1);
-    String availTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/connected";
+    String availTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+"/connected";
     mqtt_client->publish(availTopic.c_str(),"offline");
 
     publishProbeTemp(1,-100);
@@ -1043,7 +1043,7 @@ void connectMQTT()
   else
   {
     //String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
-    String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+ "/status";
+    String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+iGrillMac+ "/status";
     IGRILLLOGGER("Connecting to MQTT...", 0);
     if (client == nullptr)
       client = new WiFiClient();
@@ -1111,10 +1111,13 @@ void publishSystemInfo()
       DynamicJsonDocument infoSensorJSON(1024);
       infoSensorJSON["device"] = deviceObj;
       infoSensorJSON["name"] = "igrill_"+ iGrillMac + " Sensor";
-      infoSensorJSON["icon"] = "mdi:chip";
+      infoSensorJSON["icon"] = "mdi:grill";
+      infoSensorJSON["device_class"] = "connectivity";
       infoSensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_info";
-      infoSensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-      infoSensorJSON["json_attributes_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/info/attributes";
+      infoSensorJSON["payload_on"] = "online";
+      infoSensorJSON["payload_off"] = "offline";
+      infoSensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/status";
+      infoSensorJSON["json_attributes_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/attributes";
       serializeJson(infoSensorJSON,infoSensorPayload);
 
 
@@ -1122,16 +1125,21 @@ void publishSystemInfo()
       connectivitySensorJSON["device"] = deviceObj;
       connectivitySensorJSON["name"] = "igrill_"+ iGrillMac + " Connectivity";
       connectivitySensorJSON["icon"] = "mdi:chip";
+      connectivitySensorJSON["device_class"] = "connectivity";
+      connectivitySensorJSON["payload_on"] = "online";
+      connectivitySensorJSON["payload_off"] = "offline";
       connectivitySensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_connectivity";
-      connectivitySensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/connected";
+      connectivitySensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected";
       serializeJson(connectivitySensorJSON,connectivitySensorPayload);
 
-      String connectivityTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/connected";
-      mqtt_client->publish(connectivityTopic.c_str(), connected ? "online" : "offline");
+      String conConfigTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected/config";
+      mqtt_client->publish(conConfigTopic.c_str(), connectivitySensorPayload.c_str());
+      String connectivityTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected";
+      mqtt_client->publish(connectivityTopic.c_str(),  connected ? "online" : "offline");
 
-      String configTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/info/config";
+      String configTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/config";
       mqtt_client->publish(configTopic.c_str(),infoSensorPayload.c_str());
-      String attrTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/info/attributes";
+      String attrTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/attributes";
       mqtt_client->publish(attrTopic.c_str(),payload.c_str());
       mqttAnnounce();
     }
@@ -1282,7 +1290,7 @@ void mqttAnnounce()
       }
       //We need to publish a status of online each time we reach here otherwise probes plugged in after the initial mqtt discovery
       //will show as offline/unavailable until they see a new online announcement
-      String availTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/status";
+      String availTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+"/status";
       mqtt_client->publish(availTopic.c_str(),"online");
       delay(100);
     }

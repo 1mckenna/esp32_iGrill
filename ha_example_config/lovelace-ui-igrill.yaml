@@ -10,14 +10,13 @@
           - type: entity-filter
             color_state: true
             entities:
-              - entity: sensor.igrill_device_connectivity_status
+              - entity: binary_sensor.igrill_d481ca223348_connectivity
                 name: iGrill Status
-                icon: 'mdi:access-point'
-              - entity: sensor.esp32_igrill_ble_client
+              - entity: binary_sensor.igrill_d481ca223348_sensor
                 name: ESP32 iGrill BLE Client
-                icon: 'mdi:access-point'
             state_filter:
               - online
+              - 'on'
               - unknown
           - type: gauge
             title: Battery Level
@@ -143,10 +142,14 @@
       - type: history-graph
         title: History
         entities:
-          - sensor.igrill_d481ca223348_probe_1
-          - sensor.igrill_d481ca223348_probe_2
-          - sensor.igrill_d481ca223348_probe_3
-          - sensor.igrill_d481ca223348_probe_4
+          - entity: sensor.igrill_d481ca223348_probe_1
+            name: "Probe 1"
+          - entity: sensor.igrill_d481ca223348_probe_2
+            name: "Probe 2"
+          - entity: sensor.igrill_d481ca223348_probe_3
+            name: "Probe 3"
+          - entity: sensor.igrill_d481ca223348_probe_4
+            name: "Probe 4"
         hours_to_show: 14
         refresh_interval: 0
       - type: markdown
