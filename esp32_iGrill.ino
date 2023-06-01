@@ -861,7 +861,8 @@ void heartBeatPrint()
       connectMQTT();
     }
   }
-  else //If we dont have an mqtt client set we need to initate a new BLE Scan to try and find a device.
+
+  if(!connected) //If are not connected to an iGrill Device we need to initate a new BLE Scan to try and find a device.
   {
     if(num%3 == 0) //Only attempt to re-scan every 3th time we make it to the check unconnected (If using default this will be twice a min.)
       reScan = true; //Set the BLE rescan flag to true to initiate a new scan
