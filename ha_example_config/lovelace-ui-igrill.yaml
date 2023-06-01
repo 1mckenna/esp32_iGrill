@@ -10,14 +10,15 @@
           - type: entity-filter
             color_state: true
             entities:
-              - entity: binary_sensor.igrill_d481ca223348_connectivity
-                name: iGrill Status
               - entity: binary_sensor.igrill_d481ca223348_sensor
                 name: ESP32 iGrill BLE Client
+                state_color: true
+              - entity: binary_sensor.igrill_d481ca223348_connectivity
+                name: iGrill Status
+                state_color: true
             state_filter:
-              - online
+              - 'off'
               - 'on'
-              - unknown
           - type: gauge
             title: Battery Level
             entity: sensor.igrill_d481ca223348_battery_level

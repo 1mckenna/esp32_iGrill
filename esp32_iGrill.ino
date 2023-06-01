@@ -1111,7 +1111,7 @@ void publishSystemInfo()
       DynamicJsonDocument infoSensorJSON(1024);
       infoSensorJSON["device"] = deviceObj;
       infoSensorJSON["name"] = "igrill_"+ iGrillMac + " Sensor";
-      infoSensorJSON["icon"] = "mdi:grill";
+      infoSensorJSON["icon"] = "mdi:chip";
       infoSensorJSON["device_class"] = "connectivity";
       infoSensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_info";
       infoSensorJSON["payload_on"] = "online";
@@ -1124,7 +1124,7 @@ void publishSystemInfo()
       DynamicJsonDocument connectivitySensorJSON(1024);
       connectivitySensorJSON["device"] = deviceObj;
       connectivitySensorJSON["name"] = "igrill_"+ iGrillMac + " Connectivity";
-      connectivitySensorJSON["icon"] = "mdi:chip";
+      connectivitySensorJSON["icon"] = "mdi:grill";
       connectivitySensorJSON["device_class"] = "connectivity";
       connectivitySensorJSON["payload_on"] = "online";
       connectivitySensorJSON["payload_off"] = "offline";
