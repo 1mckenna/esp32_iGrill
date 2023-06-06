@@ -53,7 +53,7 @@ This will connect to an iGrill deivce and then publish the temperatures of the p
 ![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_boardmanager.png?raw=true)
 6. In the Boards Manager Dialog Window Search for <b>esp32</b>
 7. After a few seconds you should see esp32 by Espressif Systems
-8. Select the version you want to install (tested with 2.0.4)
+8. Select the version you want to install (**2.0.4 is the current recommended version**)
 9. Click Install
 ![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_boardmanager.png?raw=true)
 
