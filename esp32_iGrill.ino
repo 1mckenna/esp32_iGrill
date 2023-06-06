@@ -277,6 +277,19 @@ class MyClientCallback : public BLEClientCallbacks
   {
     IGRILLLOGGER(" - iGrill Disconnected!", 1);
     IGRILLLOGGER(" - Freeing Memory....", 1);
+    String availTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+"/connected";
+    mqtt_client->publish(availTopic.c_str(),"offline");
+
+    publishProbeTemp(1,-100);
+    if((iGrillModel != "iGrill_mini") && (iGrillModel != "iGrill_mini_v2"))
+    {
+      publishProbeTemp(2,-100);
+      publishProbeTemp(3,-100);
+      publishProbeTemp(4,-100);
+    }
+
+    delay(100);
+
     //Lost Connection to Device Resetting all Variables....
     connected = false; //No longer connected to iGrill
     //Free up memory
@@ -296,10 +309,10 @@ class MyClientCallback : public BLEClientCallbacks
     iGrillBattService = nullptr;
     iGrillPropaneService = nullptr;
     has_propane_sensor=false;
-    deviceStr =""; //Reset the Device String used for MQTT publishing
-    iGrillMac=""; //Reset the iGrillMac String used for MQTT publishing
-    iGrillModel=""; //Reset the iGrillModel String used for MQTT publishing
-    disconnectMQTT();
+    // deviceStr =""; //Reset the Device String used for MQTT publishing
+    // iGrillMac=""; //Reset the iGrillMac String used for MQTT publishing
+    // iGrillModel=""; //Reset the iGrillModel String used for MQTT publishing
+    // disconnectMQTT();
     IGRILLLOGGER(" - Done!", 1);
     reScan = true; //Set the BLE rescan flag to true to initiate a new scan
   }
@@ -392,8 +405,8 @@ void setupProbes()
           probe3TempCharacteristic = iGrillService->getCharacteristic(PROBE3_TEMPERATURE);
           if(probe3TempCharacteristic->canNotify())
           {
-           probe3TempCharacteristic->registerForNotify(notifyCallback);
-           IGRILLLOGGER("  -- Probe 3 Setup!",1);
+            probe3TempCharacteristic->registerForNotify(notifyCallback);
+            IGRILLLOGGER("  -- Probe 3 Setup!",1);
           }
           probe4TempCharacteristic = iGrillService->getCharacteristic(PROBE4_TEMPERATURE);
           if(probe4TempCharacteristic->canNotify())
@@ -848,7 +861,8 @@ void heartBeatPrint()
       connectMQTT();
     }
   }
-  else //If we dont have an mqtt client set we need to initate a new BLE Scan to try and find a device.
+
+  if(!connected) //If are not connected to an iGrill Device we need to initate a new BLE Scan to try and find a device.
   {
     if(num%3 == 0) //Only attempt to re-scan every 3th time we make it to the check unconnected (If using default this will be twice a min.)
       reScan = true; //Set the BLE rescan flag to true to initiate a new scan
@@ -1029,7 +1043,7 @@ void connectMQTT()
   else
   {
     //String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+String(ESP_getChipId(), HEX)+ "/status";
-    String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+ "/status";
+    String lastWillTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+iGrillMac+ "/status";
     IGRILLLOGGER("Connecting to MQTT...", 0);
     if (client == nullptr)
       client = new WiFiClient();
@@ -1081,6 +1095,9 @@ void publishSystemInfo()
       deserializeJson(deviceObj, deviceStr);
 
       String payload="";
+      String infoSensorPayload="";
+      String connectivitySensorPayload="";
+
       DynamicJsonDocument sysinfoJSON(1024);
       sysinfoJSON["device"] = deviceObj;
       sysinfoJSON["name"] = "igrill_"+ iGrillMac;
@@ -1090,8 +1107,40 @@ void publishSystemInfo()
       sysinfoJSON["Signal Strength"] = String(WiFi.RSSI());
       sysinfoJSON["IP Address"] = WiFi.localIP().toString();
       serializeJson(sysinfoJSON,payload);
-      String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/systeminfo";
-      mqtt_client->publish(topic.c_str(),payload.c_str());
+
+      DynamicJsonDocument infoSensorJSON(1024);
+      infoSensorJSON["device"] = deviceObj;
+      infoSensorJSON["name"] = "igrill_"+ iGrillMac + " Sensor";
+      infoSensorJSON["icon"] = "mdi:chip";
+      infoSensorJSON["device_class"] = "connectivity";
+      infoSensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_info";
+      infoSensorJSON["payload_on"] = "online";
+      infoSensorJSON["payload_off"] = "offline";
+      infoSensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/status";
+      infoSensorJSON["json_attributes_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/attributes";
+      serializeJson(infoSensorJSON,infoSensorPayload);
+
+
+      DynamicJsonDocument connectivitySensorJSON(1024);
+      connectivitySensorJSON["device"] = deviceObj;
+      connectivitySensorJSON["name"] = "igrill_"+ iGrillMac + " Connectivity";
+      connectivitySensorJSON["icon"] = "mdi:grill";
+      connectivitySensorJSON["device_class"] = "connectivity";
+      connectivitySensorJSON["payload_on"] = "online";
+      connectivitySensorJSON["payload_off"] = "offline";
+      connectivitySensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_connectivity";
+      connectivitySensorJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected";
+      serializeJson(connectivitySensorJSON,connectivitySensorPayload);
+
+      String conConfigTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected/config";
+      mqtt_client->publish(conConfigTopic.c_str(), connectivitySensorPayload.c_str());
+      String connectivityTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/connected";
+      mqtt_client->publish(connectivityTopic.c_str(),  connected ? "online" : "offline");
+
+      String configTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/config";
+      mqtt_client->publish(configTopic.c_str(),infoSensorPayload.c_str());
+      String attrTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+ "/info/attributes";
+      mqtt_client->publish(attrTopic.c_str(),payload.c_str());
       mqttAnnounce();
     }
     else
@@ -1113,19 +1162,41 @@ void publishProbeTemp(int probeNum, int temp)
     if(mqtt_client->connected())
     {
       String topic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+ String(probeNum);
+      String configTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+ String(probeNum)+"/config";
       if(temp == -100) //If probe unplugged
       {
         if(MQTT_RETAIN_TEMP)
-          mqtt_client->publish(topic.c_str(),"",true);            
+          mqtt_client->publish(topic.c_str(),"0",true);
         else
-          mqtt_client->publish(topic.c_str(),"");
+        {
+          mqtt_client->publish(topic.c_str(),0,true);
+          String configTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+ String(probeNum)+"/config";
+          mqtt_client->publish(configTopic.c_str(),0,true);
+        }
       }
       else
       {
         if(MQTT_RETAIN_TEMP)
           mqtt_client->publish(topic.c_str(),String(temp).c_str(),true);
         else
+        {
+          StaticJsonDocument<512> deviceObj;
+          deserializeJson(deviceObj, deviceStr);
+          String probePayload = "";
+          DynamicJsonDocument probeJSON(1024);
+          probeJSON["device"] = deviceObj;
+          probeJSON["name"] = "igrill_"+iGrillMac+" Probe "+String(probeNum);
+          probeJSON["device_class"] = "temperature";
+          probeJSON["unique_id"]   = "igrill_"+iGrillMac+"_probe"+String(probeNum);
+          probeJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+String(probeNum);
+          if(USE_METRIC_DEGREES)
+            probeJSON["unit_of_measurement"] = "°C";
+          else
+            probeJSON["unit_of_measurement"] = "°F";
+          serializeJson(probeJSON,probePayload);
           mqtt_client->publish(topic.c_str(),String(temp).c_str());
+          mqtt_client->publish(configTopic.c_str(),probePayload.c_str());
+        }
       }
     }
   }
@@ -1184,7 +1255,7 @@ void mqttAnnounce()
   DynamicJsonDocument battJSON(1024);
   battJSON["device"] = deviceObj;
   battJSON["name"] = "igrill_"+iGrillMac+" Battery Level";
-  battJSON["device_class"] = "battery"; 
+  battJSON["device_class"] = "battery";
   battJSON["unique_id"]   = "igrill_"+iGrillMac+"_batt";
   battJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/battery_level";
   battJSON["unit_of_measurement"] = "%";
@@ -1198,82 +1269,7 @@ void mqttAnnounce()
     proplvlJSON["unique_id"]   = "igrill_"+iGrillMac+"_prop";
     proplvlJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level";
     proplvlJSON["unit_of_measurement"] = "%";
-    serializeJson(proplvlJSON,propanePayload);    
-  }
-
-  DynamicJsonDocument probe1JSON(1024);
-  probe1JSON["device"] = deviceObj;
-  probe1JSON["name"] = "igrill_"+iGrillMac+" Probe 1";
-  probe1JSON["device_class"] = "temperature"; 
-  probe1JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe1";
-  probe1JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_1";
-  if(USE_METRIC_DEGREES)
-    probe1JSON["unit_of_measurement"] = "°C";
-  else
-    probe1JSON["unit_of_measurement"] = "°F";
-  if(!MQTT_RETAIN_TEMP)
-  { 
-    probe1JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-    probe1JSON["payload_available"] = "online";
-    probe1JSON["payload_not_available"] = "offline";
-  }
-  serializeJson(probe1JSON,p1Payload);
-  
-  if((iGrillModel != "iGrill_mini") && (iGrillModel != "iGrill_mini_v2"))
-  {
-    DynamicJsonDocument probe2JSON(1024);
-    probe2JSON["device"] = deviceObj;
-    probe2JSON["name"] = "igrill_"+iGrillMac+" Probe 2";
-    probe2JSON["device_class"] = "temperature"; 
-    probe2JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe2";
-    probe2JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2";
-    if(USE_METRIC_DEGREES)
-      probe2JSON["unit_of_measurement"] = "°C";
-    else
-      probe2JSON["unit_of_measurement"] = "°F"; 
-    if(!MQTT_RETAIN_TEMP)
-    { 
-      probe2JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-      probe2JSON["payload_available"] = "online";
-      probe2JSON["payload_not_available"] = "offline";
-    }
-    serializeJson(probe2JSON,p2Payload);
-
-    DynamicJsonDocument probe3JSON(1024);
-    probe3JSON["device"] = deviceObj;
-    probe3JSON["name"] = "igrill_"+iGrillMac+" Probe 3";
-    probe3JSON["device_class"] = "temperature"; 
-    probe3JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe3";
-    probe3JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3";
-    if(USE_METRIC_DEGREES)
-      probe3JSON["unit_of_measurement"] = "°C";
-    else
-      probe3JSON["unit_of_measurement"] = "°F";
-    if(!MQTT_RETAIN_TEMP)
-    {     
-      probe3JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-      probe3JSON["payload_available"] = "online";
-      probe3JSON["payload_not_available"] = "offline";
-    }
-    serializeJson(probe3JSON,p3Payload);
-
-    DynamicJsonDocument probe4JSON(1024);
-    probe4JSON["device"] = deviceObj;
-    probe4JSON["name"] = "igrill_"+iGrillMac+" Probe 4";
-    probe4JSON["device_class"] = "temperature"; 
-    probe4JSON["unique_id"]   = "igrill_"+iGrillMac+"_probe4";
-    probe4JSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4";
-    if(USE_METRIC_DEGREES)
-      probe4JSON["unit_of_measurement"] = "°C";
-    else
-      probe4JSON["unit_of_measurement"] = "°F"; 
-    if(!MQTT_RETAIN_TEMP)
-    { 
-      probe4JSON["availability_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+ "/status";
-      probe4JSON["payload_available"] = "online";
-      probe4JSON["payload_not_available"] = "offline";
-    }
-    serializeJson(probe4JSON,p4Payload);
+    serializeJson(proplvlJSON,propanePayload);
   }
 
   if(mqtt_client)
@@ -1283,20 +1279,8 @@ void mqttAnnounce()
       String battConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/battery_level/config";
       mqtt_client->publish(battConfigTopic.c_str(),battPayload.c_str(),true);
       delay(100);
-      String probe1ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_1/config";
-      mqtt_client->publish(probe1ConfigTopic.c_str(),p1Payload.c_str(),true);
-      delay(100);
       if((iGrillModel != "iGrill_mini") && (iGrillModel != "iGrill_mini_v2"))
       {
-        String probe2ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_2/config";
-        mqtt_client->publish(probe2ConfigTopic.c_str(),p2Payload.c_str(),true);
-        delay(100);
-        String probe3ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_3/config";
-        mqtt_client->publish(probe3ConfigTopic.c_str(),p3Payload.c_str(),true);
-        delay(100);
-        String probe4ConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_4/config";
-        mqtt_client->publish(probe4ConfigTopic.c_str(),p4Payload.c_str(),true);
-        delay(100);
         if(has_propane_sensor)
         {
           String propaneLevelConfigTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level/config";
@@ -1306,7 +1290,7 @@ void mqttAnnounce()
       }
       //We need to publish a status of online each time we reach here otherwise probes plugged in after the initial mqtt discovery
       //will show as offline/unavailable until they see a new online announcement
-      String availTopic = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/status";
+      String availTopic = (String)custom_MQTT_BASETOPIC + "/binary_sensor/igrill_"+ iGrillMac+"/status";
       mqtt_client->publish(availTopic.c_str(),"online");
       delay(100);
     }
@@ -1379,7 +1363,7 @@ bool writeConfigFile()
   json[USE_METRIC_DEGREES_Label] = USE_METRIC_DEGREES;
   json[NO_MULTI_WIFI_Label] = NO_MULTI_WIFI;
   // Open file for writing
-  File f = FileFS.open(CONFIG_FILE, "w"); 
+  File f = FileFS.open(CONFIG_FILE, "w");
   if (!f)
   {
     IGRILLLOGGER("Failed to open Config File for writing", 0);
@@ -1472,11 +1456,11 @@ static void handleLongPressStop()
 // Display Saved Configuration Information (Trigger by pressing and holding the reset button for a few seconds)
 void newConfigData() 
 {
-  IGRILLLOGGER("MQTT_SERVER: " + String(custom_MQTT_SERVER), 0); 
-  IGRILLLOGGER("MQTT_SERVERPORT: " + String(custom_MQTT_SERVERPORT), 0); 
-  IGRILLLOGGER("MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0); 
-  IGRILLLOGGER("MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0); 
-  IGRILLLOGGER("MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0); 
+  IGRILLLOGGER("MQTT_SERVER: " + String(custom_MQTT_SERVER), 0);
+  IGRILLLOGGER("MQTT_SERVERPORT: " + String(custom_MQTT_SERVERPORT), 0);
+  IGRILLLOGGER("MQTT_USERNAME: " + String(custom_MQTT_USERNAME), 0);
+  IGRILLLOGGER("MQTT_PASSWORD: " + String(custom_MQTT_PASSWORD), 0);
+  IGRILLLOGGER("MQTT_BASETOPIC: " + String(custom_MQTT_BASETOPIC), 0);
   IGRILLLOGGER("Use Metric Degrees: " + String(USE_METRIC_DEGREES), 0);
   IGRILLLOGGER("Don't use MultiWifi: " + String(NO_MULTI_WIFI), 0);
 }

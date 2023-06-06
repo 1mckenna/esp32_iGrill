@@ -68,8 +68,13 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: sensor.esp32_igrill_ble_client
-      to: 'offline'
+      entity_id: binary_sensor.igrill_d481ca223348_connectivity
+      to: 'off'
+      for:
+        minutes: 5
+    - platform: state
+      entity_id: binary_sensor.igrill_d481ca223348_sensor
+      to: 'off'
       for:
         minutes: 5
   action:

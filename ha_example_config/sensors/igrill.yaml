@@ -43,9 +43,3 @@ template:
         {% else %}
           Normal
         {% endif %}
-
-mqtt:
-  sensor:
-    state_topic: "homeassistant/sensor/igrill_d481ca223348/status"
-    name: "ESP32 iGrill BLE Client"
-    json_attributes_topic: "homeassistant/sensor/igrill_d481ca223348/systeminfo"

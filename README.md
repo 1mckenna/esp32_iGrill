@@ -3,6 +3,13 @@ ESP32 BLE Client for the Weber iGrill mini, iGrill mini v2, iGrillv2, iGrillv202
 
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
+**Lastest Changes:**
+- If using the default temperature retain configuration temperature probes now are added/removed from MQTT as they are connected/disconnected.
+- We now create sensors for iGrill device connectivity and the esp32 iGrill device
+- The esp32 iGrill device's attributes are now easily viewable in the esp32 iGrill sensor
+- **NOTICE: You will need to update the lovelace and automations to use the new sensors**
+
+
 # Table of Contents
 - [ESP32_iGrill](#esp32-igrill)
 - [Arduino IDE Setup](#arduino-ide-setup)
@@ -46,7 +53,7 @@ This will connect to an iGrill deivce and then publish the temperatures of the p
 ![open_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/open_boardmanager.png?raw=true)
 6. In the Boards Manager Dialog Window Search for <b>esp32</b>
 7. After a few seconds you should see esp32 by Espressif Systems
-8. Select the version you want to install (tested with 2.0.4)
+8. Select the version you want to install (**2.0.4 is the current recommended version**)
 9. Click Install
 ![install_boardmanager](https://github.com/1mckenna/esp32_iGrill/blob/main/images/install_boardmanager.png?raw=true)
 
@@ -174,7 +181,9 @@ All the configs needed to setup the dashboard have been placed in the ha_example
 | **MQTT Topic** | **Value(s)** |
 | :--------------------: | :--------------------: |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/status | online: MQTT Connected</br>offline: MQTT Disconnected |
-|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/systeminfo | System Information about iGrill BLE Client Device</br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Strength, IP Address)</i>|
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/connected | online: iGrill Device Connected</br>offline: iGrill Device Disconnected |
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/info/attributes | System Information about iGrill BLE Client Device</br><i>(iGrill Device Name, ESP32 Chip ID, Uptime, Wifi Network, Wifi Signal Strength, IP Address)</i>|
+|MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/info/config |  MQTT Autoconfiguration Settings for System Information Sensor|
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_1 | Temperature Value of Probe 1 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_2 | Temperature Value of Probe 2 |
 |MQTT_BASETOPIC/sensor/igrill_<i>iGrillMAC</i>/probe_3 | Temperature Value of Probe 3 |
@@ -209,6 +218,8 @@ Optionally, if you wish to also retain the last seen temperature value as well y
     * iGrill Devices can only be connected to a single device at a time. For best results unpair the iGrill from all phones/tablets that it has been conncetd to in the past.
   * Home Assistant is not showing the correct temperatures but the temperature shown on the device is correct.
     * Make sure the Use Metric Degrees setting in the configuration portal matches the setting on your iGrill device.
+  * My iGrill device doesn't report all probe temperatures
+    * Ensure you are using the latest version of the esp32 board library shown as working. **2.0.4 is the current recommended version**
 
 ## Change Serial Logging Level
 If you are running into an issue and want to increase the verbosity of the logging that can be done via the following two settings in <b>config.h</b>
