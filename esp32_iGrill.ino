@@ -1110,7 +1110,7 @@ void publishSystemInfo()
 
       DynamicJsonDocument infoSensorJSON(1024);
       infoSensorJSON["device"] = deviceObj;
-      infoSensorJSON["name"] = "igrill_"+ iGrillMac + " Sensor";
+      infoSensorJSON["name"] = "System Info";
       infoSensorJSON["icon"] = "mdi:chip";
       infoSensorJSON["device_class"] = "connectivity";
       infoSensorJSON["unique_id"] = "igrill_"+ iGrillMac +"_info";
@@ -1123,7 +1123,7 @@ void publishSystemInfo()
 
       DynamicJsonDocument connectivitySensorJSON(1024);
       connectivitySensorJSON["device"] = deviceObj;
-      connectivitySensorJSON["name"] = "igrill_"+ iGrillMac + " Connectivity";
+      connectivitySensorJSON["name"] = "Connectivity";
       connectivitySensorJSON["icon"] = "mdi:grill";
       connectivitySensorJSON["device_class"] = "connectivity";
       connectivitySensorJSON["payload_on"] = "online";
@@ -1185,7 +1185,7 @@ void publishProbeTemp(int probeNum, int temp)
           String probePayload = "";
           DynamicJsonDocument probeJSON(1024);
           probeJSON["device"] = deviceObj;
-          probeJSON["name"] = "igrill_"+iGrillMac+" Probe "+String(probeNum);
+          probeJSON["name"] = "Probe "+String(probeNum);
           probeJSON["device_class"] = "temperature";
           probeJSON["unique_id"]   = "igrill_"+iGrillMac+"_probe"+String(probeNum);
           probeJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+ iGrillMac+"/probe_"+String(probeNum);
@@ -1254,7 +1254,7 @@ void mqttAnnounce()
 
   DynamicJsonDocument battJSON(1024);
   battJSON["device"] = deviceObj;
-  battJSON["name"] = "igrill_"+iGrillMac+" Battery Level";
+  battJSON["name"] = "Battery Level";
   battJSON["device_class"] = "battery";
   battJSON["unique_id"]   = "igrill_"+iGrillMac+"_batt";
   battJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/battery_level";
@@ -1265,7 +1265,7 @@ void mqttAnnounce()
   {
     DynamicJsonDocument proplvlJSON(1024);
     proplvlJSON["device"] = deviceObj;
-    proplvlJSON["name"] = "igrill_"+iGrillMac+" Propane Level";
+    proplvlJSON["name"] = "Propane Level";
     proplvlJSON["unique_id"]   = "igrill_"+iGrillMac+"_prop";
     proplvlJSON["state_topic"] = (String)custom_MQTT_BASETOPIC + "/sensor/igrill_"+iGrillMac+"/propane_level";
     proplvlJSON["unit_of_measurement"] = "%";
