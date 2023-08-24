@@ -4,6 +4,7 @@ ESP32 BLE Client for the Weber iGrill mini, iGrill mini v2, iGrillv2, iGrillv202
 This will connect to an iGrill deivce and then publish the temperatures of the probes and the iGrill Device battery level to MQTT for use in Home Automation systems.
 
 **Lastest Changes:**
+- Update MQTT Autodiscovery to resolve [Home Assistant deprication warnings](https://github.com/1mckenna/esp32_iGrill/issues/32)
 - If using the default temperature retain configuration temperature probes now are added/removed from MQTT as they are connected/disconnected.
 - We now create sensors for iGrill device connectivity and the esp32 iGrill device
 - The esp32 iGrill device's attributes are now easily viewable in the esp32 iGrill sensor
